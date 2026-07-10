@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "editor-playground",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@pro-print/editor", "play"],
+      "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "web", "dev"],
+      "port": 3000
+    }
+  ]
+}

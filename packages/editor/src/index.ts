@@ -51,6 +51,12 @@ export {
 } from './core/commands/element-commands'
 export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'
 
+// Canvas components (read-only in phase 3; interactions arrive in phase 4)
+export { default as CanvasViewport } from './components/canvas/CanvasViewport.vue'
+export { useCanvasGestures } from './composables/use-canvas-gestures'
+export { rulerScaleForZoom } from './core/ruler-scale'
+export type { RulerScale } from './core/ruler-scale'
+
 // Stores
 export { useDocumentStore } from './stores/document-store'
 export type { DocumentStore } from './stores/document-store'
@@ -58,3 +64,5 @@ export { useHistoryStore } from './stores/history-store'
 export type { HistoryStore } from './stores/history-store'
 export { useSelectionStore } from './stores/selection-store'
 export type { MarqueeRect, SelectionStore } from './stores/selection-store'
+export { MAX_ZOOM, MIN_ZOOM, useViewportStore } from './stores/viewport-store'
+export type { PagePointMm, ScreenPoint, ViewportStore } from './stores/viewport-store'

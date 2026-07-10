@@ -6,6 +6,10 @@
  */
 @import "tailwindcss" prefix(pp);
 
+/* Scan the library source regardless of the consuming Vite root (lib build,
+ * playground dev server, or a host app) - paths are relative to this file. */
+@source "../";
+
 /* `static` keeps every token in the compiled CSS even when unused, so host
  * apps can override --pp-* variables and later phases can use them from
  * plain CSS (Tailwind 4 otherwise prunes unused theme variables). */

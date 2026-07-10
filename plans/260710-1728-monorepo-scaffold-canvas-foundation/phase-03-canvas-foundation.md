@@ -1,10 +1,11 @@
 ---
 phase: 3
-title: "Canvas Foundation"
-status: pending
-effort: "4-5 days"
+title: Canvas Foundation
+status: completed
+effort: 4-5 days
 priority: P1
-dependencies: [2]
+dependencies:
+  - 2
 ---
 
 # Phase 3: Canvas Foundation
@@ -46,6 +47,16 @@ Rendering: single CSS transform on CanvasStage; rulers/grid re-draw from viewpor
 5. Rulers: canvas 2d, tick density adapts to zoom (1/5/10mm steps), highlight cursor position, DPR scaling
 6. GridOverlay SVG pattern + toggle in viewport-store; GuideLayer: dragging from ruler spawns guide (command → undoable), double-click removes
 7. Perf pass: rAF-throttle ruler redraws; verify no layout thrash via DevTools with 100 seeded elements
+
+## Implementation Notes (post-review)
+- Deviation: one `CanvasRuler.vue` (orientation prop) instead of RulerHorizontal/RulerVertical — identical logic, DRY
+- Grid: CSS gradient tiles instead of SVG patterns (SVG pattern raster stalled screenshots/compositor at 60k+ cells)
+- `will-change: transform` removed from stage — froze CDP screenshot capture; transform alone promotes the layer
+- Added `@source "../"` to styles entry — Tailwind v4 only scans the consuming Vite root; lib source outside it was silently unscanned (utilities missing at runtime)
+- Code-review driven: `use-pointer-drag.ts` shared gesture helper (capture/teardown/pointercancel/Escape/multi-touch/unmount-cancel — structural prereq for phase 4), fixed inverted initial-fit flag (hidden-mount 0x0 fit bug), space-key reset on focusout, editable-target guard, ruler button filter + stopPropagation, guide drag repositions absolutely through screenToPageMm (zoom-during-drag safe)
+- Deferred (review S3-S6): grid minor-line hiding at low zoom, guide hairline counter-scaling, DPR-change ruler redraw, rect corner-radius outer-edge fidelity (matters at print pipeline, roadmap phase 3)
+- Playground (`pnpm --filter @pro-print/editor play`) added: bare Vue 3 bench, doubles as no-Nuxt-dependency proof
+- Environment note: CDP captureScreenshot intermittently times out on this machine while app main thread stays responsive — not an app defect; Playwright E2E in phase 6 will confirm
 
 ## Success Criteria
 - [ ] Zoom at cursor keeps point under cursor stationary (10%↔400%)

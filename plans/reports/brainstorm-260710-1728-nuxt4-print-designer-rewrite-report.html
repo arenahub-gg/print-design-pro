@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Print Designer — Brainstorm Report</title>
+<style>
+:root {
+  --ink: #0a0a0a;
+  --ink-soft: #1a1a1a;
+  --paper: #faf7f2;
+  --paper-warm: #f0ebe1;
+  --accent: #b8232c;
+  --accent-soft: #e8d4d6;
+  --gold: #8a6f2c;
+  --muted: #6b6258;
+  --hairline: rgba(10,10,10,0.12);
+  --serif: 'Fraunces', Georgia, serif;
+  --sans: 'Inter Tight', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.65 var(--sans); }
+.slide { min-height: 100vh; padding: 60px 8vw; border-bottom: 1px solid var(--hairline); position: relative; }
+.container { max-width: 1240px; margin: 0 auto; }
+.slide-tag { position: absolute; top: 28px; left: 8vw; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); }
+.slide-num { position: absolute; top: 28px; right: 8vw; font: 400 11px var(--mono); letter-spacing: 0.15em; color: var(--muted); }
+h1 { font: 300 clamp(60px, 11vw, 180px)/0.92 var(--serif); letter-spacing: -0.02em; }
+h2 { font: 300 clamp(40px, 6vw, 90px)/1.02 var(--serif); letter-spacing: -0.01em; }
+h2 em, h1 em { color: var(--accent); font-style: italic; }
+h3 { font: 400 clamp(20px, 2.2vw, 28px)/1.2 var(--serif); margin-bottom: 12px; }
+h4 { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 16px; }
+.lead { font: 300 clamp(18px, 1.6vw, 22px)/1.5 var(--serif); max-width: 720px; }
+p { max-width: 640px; }
+.eyebrow { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent); display: block; margin-bottom: 24px; }
+.meta-row { display: flex; gap: 48px; flex-wrap: wrap; margin-top: 60px; font: 400 12px var(--mono); color: var(--muted); }
+.meta-row b { display: block; color: var(--ink); font-weight: 500; margin-top: 4px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1.2fr; gap: 80px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.card { background: var(--paper-warm); padding: 36px 32px; border: 1px solid var(--hairline); position: relative; }
+.card.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.card.dark h4 { color: rgba(250,247,242,0.6); }
+.card-mark { position: absolute; top: 20px; right: 24px; font: 400 11px var(--mono); color: var(--muted); }
+.card.dark .card-mark { color: rgba(250,247,242,0.5); }
+.track-box { border-left: 3px solid var(--accent); background: var(--paper-warm); padding: 40px 44px; margin-top: 48px; }
+.pull-quote { border-left: 2px solid var(--accent); padding: 12px 0 12px 40px; font: 300 italic clamp(26px, 3.2vw, 42px)/1.25 var(--serif); max-width: 900px; margin: 60px 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+th { font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); text-align: left; padding: 12px 16px 12px 0; border-bottom: 1.5px solid var(--ink); }
+td { padding: 16px 16px 16px 0; border-bottom: 1px solid var(--hairline); vertical-align: top; font-size: 14px; }
+tr:last-child td { border-bottom: 1.5px solid var(--ink); }
+td:first-child { font-family: var(--serif); font-weight: 500; font-size: 16px; }
+.col-featured { background: rgba(184,35,44,0.04); }
+.num-big { font: 300 clamp(48px, 6vw, 96px)/1 var(--serif); color: var(--accent); }
+.num-label { font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-top: 8px; }
+.phase-list { list-style: none; margin-top: 48px; }
+.phase-list li { display: grid; grid-template-columns: 80px 1fr; gap: 32px; padding: 24px 0; border-bottom: 1px solid var(--hairline); }
+.phase-list li:first-child { border-top: 1.5px solid var(--ink); }
+.phase-list .ph-num { font: 300 32px var(--serif); color: var(--accent); }
+.phase-list .ph-title { font: 500 16px var(--serif); margin-bottom: 4px; }
+.phase-list .ph-note { font-size: 13px; color: var(--muted); max-width: 640px; }
+code { font: 400 13px var(--mono); background: var(--paper-warm); padding: 1px 6px; }
+pre { font: 400 12.5px/1.7 var(--mono); background: var(--ink); color: var(--paper); padding: 32px; overflow-x: auto; margin-top: 40px; }
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.delay-1 { transition-delay: .15s; }
+.delay-2 { transition-delay: .3s; }
+@media (prefers-reduced-motion: reduce), print {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+@media (max-width: 900px) {
+  .slide { padding: 60px 6vw; }
+  .slide-tag { left: 6vw; }
+  .slide-num { right: 6vw; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 01 COVER -->
+<section class="slide" id="cover" style="display:flex; align-items:center;">
+  <div class="container">
+    <span class="eyebrow reveal">Brainstorm Report · ck:brainstorm --html</span>
+    <h1 class="reveal">Pro Print<br>Designer<br><em>viết lại từ đầu.</em></h1>
+    <p class="lead reveal delay-1" style="margin-top:48px;">Clean-room rewrite của vue-print-designer trên Nuxt 4 — một print designer open-source với license tự do, UX Canva-like, và thư viện editor nhúng được vào mọi app Vue.</p>
+    <div class="meta-row reveal delay-2">
+      <div>NGÀY<b>2026-07-10</b></div>
+      <div>DỰ ÁN<b>E:\development\pro-print-designer</b></div>
+      <div>THAM CHIẾU<b>vue-print-designer v1.7.33 (Gitee)</b></div>
+      <div>TRẠNG THÁI<b>Design đã duyệt</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 PROBLEM -->
+<section class="slide" id="problem">
+  <span class="slide-tag">■ 02 · Vấn đề</span>
+  <span class="slide-num">02 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>Problem statement</h4>
+      <h2>Không tồn tại print designer Vue<br><em>tự do thương mại hóa.</em></h2>
+    </div>
+    <div class="grid-2 reveal delay-1" style="margin-top:60px;">
+      <div>
+        <p class="lead">Yêu cầu bề mặt: "thiết kế lại vue-print-designer bằng Nuxt 4, design lại UI." Vấn đề thật nằm sâu hơn.</p>
+      </div>
+      <div>
+        <p>Repo tham chiếu là <strong>AGPL-3.0 + điều khoản thương mại riêng</strong>: bản open-source chỉ cho cá nhân phi thương mại, bắt buộc giữ logo và copyright. Muốn dùng doanh nghiệp hoặc bỏ logo — phải mua license từ printdot.cc.</p>
+        <p style="margin-top:16px;">Port code trực tiếp sang Nuxt 4 tạo ra derivative work, kế thừa toàn bộ ràng buộc đó. Hệ sinh thái Vue hiện không có print designer hiện đại, nhúng được, license thoáng — đó là khoảng trống sản phẩm này lấp.</p>
+      </div>
+    </div>
+    <div class="pull-quote reveal delay-2">Port code là mang xiềng xích AGPL về nhà. Clean-room là con đường duy nhất đến tự do license.</div>
+  </div>
+</section>
+
+<!-- 03 EVIDENCE -->
+<section class="slide" id="evidence">
+  <span class="slide-tag">■ 03 · Bằng chứng</span>
+  <span class="slide-num">03 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>Scout codebase tham chiếu</h4>
+      <h2>51.000 dòng code.<br><em>Không phải project cuối tuần.</em></h2>
+    </div>
+    <div class="grid-3 reveal delay-1" style="margin-top:60px;">
+      <div class="card"><div class="card-mark">01</div><div class="num-big">51k</div><div class="num-label">LOC Vue/TS · 117 file</div><p style="margin-top:16px; font-size:13px;">Vue 3 + Vite + Pinia + Tailwind 3. Không dùng UI library — cố ý bỏ để giảm 65% bundle.</p></div>
+      <div class="card"><div class="card-mark">02</div><div class="num-big">11</div><div class="num-label">Loại element</div><p style="margin-top:16px; font-size:13px;">Text, image, table, barcode, QR, line, rect, circle, page-number, multi-label. Render engine tự viết: measure → paginate → iframe/ảnh/PDF.</p></div>
+      <div class="card dark"><div class="card-mark">03</div><div class="num-big" style="color:var(--accent-soft);">2</div><div class="num-label" style="color:rgba(250,247,242,0.6);">Tính năng ngoài tầm với</div><p style="margin-top:16px; font-size:13px;">Silent print và cloud print phụ thuộc PrintDot Client — desktop app đóng của tác giả gốc. Ngoài scope vòng này.</p></div>
+    </div>
+    <div class="track-box reveal delay-2">
+      <h4>Ràng buộc từ dự án hiện tại</h4>
+      <p style="max-width:none;">Thư mục <code>pro-print-designer</code> trống hoàn toàn — greenfield, không ràng buộc kỹ thuật. Ràng buộc duy nhất là pháp lý (clean-room) và khối lượng (full parity = nhiều tháng).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 04 OPTIONS -->
+<section class="slide" id="options">
+  <span class="slide-tag">■ 04 · Phương án</span>
+  <span class="slide-num">04 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>Kiến trúc phân phối</h4>
+      <h2>Ba con đường.<br><em>Một con đường sống.</em></h2>
+    </div>
+    <table class="reveal delay-1">
+      <thead>
+        <tr><th>Phương án</th><th class="col-featured">A · Monorepo library-first ✓</th><th>B · App-first Nuxt</th><th>C · Nuxt Layer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hình thái</td><td class="col-featured">packages/editor (npm lib) + apps/web (Nuxt 4)</td><td>Một project Nuxt duy nhất</td><td>Editor phân phối như Nuxt layer</td></tr>
+        <tr><td>Nhúng được</td><td class="col-featured">Mọi app Vue 3; web component thêm sau</td><td>Không — phải "tách sau"</td><td>Chỉ app Nuxt</td></tr>
+        <tr><td>Tốc độ khởi động</td><td class="col-featured">Chậm hơn ~1 tuần setup</td><td>Nhanh nhất</td><td>Trung bình</td></tr>
+        <tr><td>Nợ kỹ thuật</td><td class="col-featured">Thấp — ranh giới ép kiến trúc sạch</td><td>Cao — "tách sau" thực tế là viết lại lần hai</td><td>Khóa vào Nuxt, thua bản gốc</td></tr>
+        <tr><td>Phán quyết</td><td class="col-featured"><strong>CHỌN</strong></td><td>Loại</td><td>Loại</td></tr>
+      </tbody>
+    </table>
+    <div class="grid-3 reveal delay-2" style="margin-top:48px;">
+      <div class="card"><div class="card-mark">UI</div><h4>UI stack</h4><h3>Nuxt UI v3 + custom editor</h3><p style="font-size:13px;">Nuxt UI cho app shell; editor package chỉ Tailwind + Reka UI primitives để giữ bundle nhẹ. Loại shadcn-vue (bảo trì nhiều) và full-custom (tốn nhiều tuần).</p></div>
+      <div class="card"><div class="card-mark">UX</div><h4>Thẩm mỹ</h4><h3>Canva-like thân thiện</h3><p style="font-size:13px;">Tile element lớn có label, properties panel dễ hiểu, màu sắc ấm, light mặc định + dark mode. Người không chuyên thiết kế dùng được ngay.</p></div>
+      <div class="card"><div class="card-mark">DB</div><h4>Lưu trữ vòng 1</h4><h3>Local-first</h3><p style="font-size:13px;">IndexedDB + import/export JSON. Không cần server, self-host tức thì. Nitro API + SQLite sync là vòng sau — thêm được mà không phá local-first.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 RECOMMENDATION -->
+<section class="slide" id="recommendation">
+  <span class="slide-tag">■ 05 · Khuyến nghị</span>
+  <span class="slide-num">05 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>Kiến trúc chốt</h4>
+      <h2>Library là sản phẩm.<br><em>App Nuxt là showcase sống.</em></h2>
+    </div>
+    <pre class="reveal delay-1">pro-print-designer/            (pnpm workspace)
+├── packages/editor/           # @pro-print/editor — Vue 3 lib (Vite lib mode)
+│   ├── core/                  # schema template JSON, command pattern undo/redo
+│   ├── components/            # canvas, elements, toolbar, properties panel
+│   ├── render/                # measure → paginate → print iframe / ảnh / PDF
+│   └── styles/                # Tailwind preset + design tokens
+└── apps/web/                  # Nuxt 4 + Nuxt UI v3
+    ├── landing                # SSR
+    ├── template manager       # IndexedDB CRUD, import/export
+    └── editor page            # ssr: false, host @pro-print/editor</pre>
+    <div class="grid-2 reveal delay-2" style="margin-top:48px;">
+      <div>
+        <h4>State management</h4>
+        <p>Pinia store module hóa — element / selection / history / page / guides. Cùng cách phân rã đã được kiểm chứng ở bản gốc, nhưng implementation hoàn toàn tự viết.</p>
+      </div>
+      <div>
+        <h4>Vì sao Nuxt 4 hợp lý</h4>
+        <p>Editor bản chất là SPA client-side — SSR vô nghĩa với canvas. Nuxt chỉ đáng giá vì user chọn app hoàn chỉnh: landing SSR, quản lý template, nền cho auth/sync tương lai. Trang editor chạy <code>ssr: false</code> để né toàn bộ rủi ro hydration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 ROADMAP -->
+<section class="slide" id="roadmap">
+  <span class="slide-tag">■ 06 · Lộ trình</span>
+  <span class="slide-num">06 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>7 phase tuần tự</h4>
+      <h2>Full parity — nhưng<br><em>không bao giờ làm một cục.</em></h2>
+    </div>
+    <ol class="phase-list reveal delay-1">
+      <li><span class="ph-num">01</span><div><div class="ph-title">Nền tảng canvas</div><div class="ph-note">Monorepo scaffold, page model, zoom/pan, rulers/guides, kéo-thả-resize-xoay, selection, undo/redo (command pattern).</div></div></li>
+      <li><span class="ph-num">02</span><div><div class="ph-title">Element cơ bản + properties panel</div><div class="ph-note">Text, image, line, rect, circle. Lưu IndexedDB, import/export JSON.</div></div></li>
+      <li><span class="ph-num">03</span><div><div class="ph-title">Print pipeline v1</div><div class="ph-note">Browser print, export ảnh/PDF, preview. Kiểm chứng mm↔px/DPI trên máy in thật ngay tại đây — không để đến cuối.</div></div></li>
+      <li><span class="ph-num">04</span><div><div class="ph-title">Barcode + QR + page number</div><div class="ph-note">jsbarcode, qrcode — hai dependency nhẹ đã kiểm chứng.</div></div></li>
+      <li><span class="ph-num">05</span><div><div class="ph-title">Table + smart pagination</div><div class="ph-note">Boss cuối — ~30% công sức toàn dự án. Tách riêng, tham khảo hành vi bản gốc (không phải code), chấp nhận nhiều iteration.</div></div></li>
+      <li><span class="ph-num">06</span><div><div class="ph-title">Multi-label, phím tắt, dark mode, i18n</div><div class="ph-note">VN/EN trước, mở rộng sau (bản gốc có 6 locale).</div></div></li>
+      <li><span class="ph-num">07</span><div><div class="ph-title">Web component wrapper + publish npm</div><div class="ph-note">Hoàn tất câu chuyện cross-framework — ngang hàng bản gốc về phân phối.</div></div></li>
+    </ol>
+    <p class="reveal delay-2" style="margin-top:32px; color:var(--muted); font-size:13px;">Ngoài scope: silent print / cloud print (cần desktop client — để mở qua WebSocket agent protocol tương lai), server template sync (vòng 2), Monaco scripting (quyết định ở phase 4+).</p>
+  </div>
+</section>
+
+<!-- 07 RISKS -->
+<section class="slide" id="risks">
+  <span class="slide-tag">■ 07 · Rủi ro</span>
+  <span class="slide-num">07 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>Giả định &amp; failure modes</h4>
+      <h2>Bốn thứ có thể<br><em>giết dự án này.</em></h2>
+    </div>
+    <table class="reveal delay-1">
+      <thead><tr><th>Rủi ro</th><th>Mức</th><th>Đối sách</th></tr></thead>
+      <tbody>
+        <tr><td>Độ trung thực WYSIWYG khi in</td><td>CAO</td><td>Toán mm↔px/DPI khác nhau giữa browser và máy in. Test máy in thật từ phase 3, coi là điều kiện nghiệm thu.</td></tr>
+        <tr><td>Table smart pagination</td><td>CAO</td><td>Phase riêng, không gộp. Bản gốc mất nhiều iteration — lên lịch với kỳ vọng thực tế.</td></tr>
+        <tr><td>Vi phạm kỷ luật clean-room</td><td>CAO</td><td>Tuyệt đối không copy code từ clone tham chiếu. Chỉ trích xuất spec hành vi (danh sách property, phím tắt, print param) rồi xóa clone.</td></tr>
+        <tr><td>Scope nhiều tháng, mất động lực</td><td>TRUNG</td><td>Phase 1–3 tạo ra editor demo được công khai — mốc giá trị sớm nhất.</td></tr>
+      </tbody>
+    </table>
+    <div class="track-box reveal delay-2">
+      <h4>Tiêu chí thành công</h4>
+      <p style="max-width:none;"><code>npm install @pro-print/editor</code> chạy trong app Vue 3 thuần · template JSON round-trip không mất dữ liệu · bản in khớp canvas trong dung sai trên giấy A4 và giấy nhãn · license MIT, zero code kế thừa AGPL.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 08 HANDOFF -->
+<section class="slide" id="handoff">
+  <span class="slide-tag">■ 08 · Bàn giao</span>
+  <span class="slide-num">08 / 08</span>
+  <div class="container">
+    <div class="reveal">
+      <h4>Quyết định cuối</h4>
+      <h2>Clean-room. Monorepo.<br><em>Bắt đầu từ canvas.</em></h2>
+    </div>
+    <div class="grid-3 reveal delay-1" style="margin-top:60px;">
+      <div class="card"><div class="card-mark">01</div><h4>Đã chốt</h4><h3>8 quyết định</h3><p style="font-size:13px;">Clean-room · MIT open-source · full parity chia phase · Nuxt 4 full app · monorepo library-first · Nuxt UI + custom editor · Canva-like · local-first.</p></div>
+      <div class="card"><div class="card-mark">02</div><h4>Việc trước tiên</h4><h3>Trích spec hành vi</h3><p style="font-size:13px;">Lấy danh sách property từng element, phím tắt, print param từ bản gốc thành spec — rồi xóa clone để bảo toàn clean-room.</p></div>
+      <div class="card dark"><div class="card-mark">03</div><h4>Bước tiếp</h4><h3>/ck:plan → Phase 1</h3><p style="font-size:13px;">Plan chi tiết cho monorepo scaffold + nền tảng canvas, dùng report này làm context.</p></div>
+    </div>
+    <p class="reveal delay-2" style="margin-top:60px; font: 400 12px var(--mono); color:var(--muted);">Report: plans/reports/brainstorm-260710-1728-nuxt4-print-designer-rewrite-report.md · Generated 2026-07-10 · ck:brainstorm --html</p>
+  </div>
+</section>
+
+<script>
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

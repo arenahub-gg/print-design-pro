@@ -1,0 +1,23 @@
+/*
+ * Editor stylesheet entry. Tailwind 4 CSS-first config with a `pp` prefix so
+ * compiled utility classes cannot collide with a host app's own Tailwind.
+ * Design tokens (Canva-like palette) are defined under @theme and expanded in
+ * later phases when shell components arrive.
+ */
+@import "tailwindcss" prefix(pp);
+
+/* `static` keeps every token in the compiled CSS even when unused, so host
+ * apps can override --pp-* variables and later phases can use them from
+ * plain CSS (Tailwind 4 otherwise prunes unused theme variables). */
+@theme static {
+  /* Brand accents - warm, friendly (Canva-like direction) */
+  --color-brand-50: #f0f7ff;
+  --color-brand-100: #dceeff;
+  --color-brand-500: #2f7cf6;
+  --color-brand-600: #1f66d8;
+  --color-brand-700: #1a53b0;
+
+  /* Editor surfaces */
+  --color-surface-canvas: #eef1f5;
+  --color-surface-panel: #ffffff;
+}

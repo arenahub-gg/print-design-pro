@@ -1,0 +1,45 @@
+{
+  "name": "@pro-print/editor",
+  "version": "0.1.0",
+  "description": "Embeddable visual print designer for Vue 3 - labels, receipts, forms",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/editor.umd.cjs",
+  "module": "./dist/editor.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/editor.js",
+      "require": "./dist/editor.umd.cjs"
+    },
+    "./style.css": "./dist/editor.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "peerDependencies": {
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.2",
+    "@types/node": "^26.1.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "pinia": "^3.0.4",
+    "tailwindcss": "^4.3.2",
+    "vite": "^8.1.4",
+    "vite-plugin-dts": "^5.0.3",
+    "vue": "^3.5.39",
+    "vue-tsc": "^3.3.7"
+  }
+}

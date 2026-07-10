@@ -1,8 +1,8 @@
 ---
 phase: 1
-title: "Monorepo Scaffold"
-status: pending
-effort: "1-2 days"
+title: Monorepo Scaffold
+status: completed
+effort: 1-2 days
 priority: P1
 dependencies: []
 ---

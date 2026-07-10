@@ -36,7 +36,7 @@ Design decisions locked in brainstorm report — do not re-litigate: clean-room,
 |-------|------|--------|
 | 1 | [Monorepo Scaffold](./phase-01-monorepo-scaffold.md) | Completed |
 | 2 | [Core Document Model + History](./phase-02-core-document-model-history.md) | Completed |
-| 3 | [Canvas Foundation](./phase-03-canvas-foundation.md) | Pending |
+| 3 | [Canvas Foundation](./phase-03-canvas-foundation.md) | Completed |
 | 4 | [Element Interactions](./phase-04-element-interactions.md) | Pending |
 | 5 | [Editor Shell + Nuxt Integration](./phase-05-editor-shell-nuxt-integration.md) | Pending |
 | 6 | [Testing + Verification](./phase-06-testing-verification.md) | Pending |

@@ -27,8 +27,10 @@ export default tseslint.config(
     },
   },
   {
-    // Nuxt auto-imports (defineNuxtConfig, useHead, ...) are resolved at build time
-    files: ['apps/web/**'],
+    // TS/Vue: the type checker owns undefined-identifier detection (DOM lib,
+    // Nuxt auto-imports) - eslint's no-undef only false-positives there.
+    // Plain .js/.mjs files keep it.
+    files: ['**/*.ts', '**/*.vue'],
     rules: {
       'no-undef': 'off',
     },

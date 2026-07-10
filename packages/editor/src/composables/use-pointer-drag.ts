@@ -18,6 +18,8 @@ export interface PointerDragHandlers {
  */
 export function usePointerDrag() {
   let activeTeardown: (() => void) | null = null
+  /** Teardown + the gesture's onCancel - used for abort paths (unmount, cancelActive). */
+  let activeAbort: (() => void) | null = null
 
   const isDragging = (): boolean => activeTeardown !== null
 
@@ -35,6 +37,7 @@ export function usePointerDrag() {
       if (target.hasPointerCapture(event.pointerId))
         target.releasePointerCapture(event.pointerId)
       activeTeardown = null
+      activeAbort = null
     }
 
     const onMove = (move: PointerEvent): void => {
@@ -66,16 +69,23 @@ export function usePointerDrag() {
     target.addEventListener('pointercancel', onCancel)
     window.addEventListener('keydown', onKeyDown, true)
     activeTeardown = teardown
+    activeAbort = () => {
+      teardown()
+      handlers.onCancel?.()
+    }
 
     return true
   }
 
+  /** Abort the live drag as if cancelled - gesture state gets cleaned up. */
   function cancelActive(): void {
-    activeTeardown?.()
+    activeAbort?.()
   }
 
   onBeforeUnmount(() => {
-    activeTeardown?.()
+    // Abort (not just teardown): gesture preview lives in app-scoped Pinia
+    // stores that outlive this component - onCancel must run to clear it.
+    activeAbort?.()
   })
 
   return { startDrag, cancelActive, isDragging }

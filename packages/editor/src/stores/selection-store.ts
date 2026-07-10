@@ -1,19 +1,10 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-/** Marquee (rubber-band) rectangle in mm page coordinates while dragging. */
-export interface MarqueeRect {
-  xMm: number
-  yMm: number
-  widthMm: number
-  heightMm: number
-}
-
 // Selection is UI state, not document state: it is never persisted and never
-// part of undo history.
+// part of undo history. (Marquee state lives in the interaction store.)
 export const useSelectionStore = defineStore('pp-selection', () => {
   const selectedIds = ref<Set<string>>(new Set())
-  const marquee = ref<MarqueeRect | null>(null)
 
   const hasSelection = computed(() => selectedIds.value.size > 0)
   const selectionCount = computed(() => selectedIds.value.size)
@@ -53,7 +44,6 @@ export const useSelectionStore = defineStore('pp-selection', () => {
 
   return {
     selectedIds,
-    marquee,
     hasSelection,
     selectionCount,
     isSelected,

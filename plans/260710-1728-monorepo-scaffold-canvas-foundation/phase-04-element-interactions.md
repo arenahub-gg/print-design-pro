@@ -1,10 +1,11 @@
 ---
 phase: 4
-title: "Element Interactions"
-status: pending
-effort: "5-6 days"
+title: Element Interactions
+status: completed
+effort: 5-6 days
 priority: P1
-dependencies: [3]
+dependencies:
+  - 3
 ---
 
 # Phase 4: Element Interactions
@@ -45,6 +46,15 @@ Gesture lifecycle: pointerdown → history.begin → pointermove (preview via lo
 6. Keyboard map composable (scoped to canvas focus): nudge/delete/duplicate/select-all/undo/redo/escape
 7. Locked/hidden behavior + cursor affordances (move/resize/rotate cursors)
 8. Wire everything through transactions; verify one gesture = one undo entry
+
+## Implementation Notes (post-review)
+- Rotated single-element resize implemented FULLY correct (anchor-fixed in world space, local-frame math incl. edge handles, shift-aspect, alt-center) — the plan's allowed degrade wasn't needed; reviewer verified algebraically
+- Multi-select resize = axis-aligned bbox proportional scale (per plan); group rotate repositions members around combined center
+- Preview architecture: gestures write patches to interaction-store; document untouched until ONE updateElementsCommand commits on release (roundMm at boundary)
+- Code-review driven fixes: keyboard gated during live gestures (Delete/undo mid-drag would commit against dead ids), unmount/cancelActive now aborts with onCancel (preview leak), nudge coalescing (key auto-repeat flooded 100-entry history cap), selection.prune wired to editVersion watcher (dangling ids after structural undo), overlay frame uses unlocked-only set (mixed-lock handle/math mismatch), dead marquee state removed from selection-store
+- Deferred (review S1-S4): shift-toggle on pointerup, absolute vs delta rotate snap (product call), handle right-click swallow, rotated-edge-handle test coverage
+- Verified live in browser via synthetic pointer sequences (CDP input broken in this environment — main-thread/JS verification instead): select→handles, drag+snap+undo exact, resize 16→32.7mm, rotate 7→100.7°, marquee 13 elements, Ctrl+D one transaction
+- Environment note: CDP mouse input stopped dispatching entirely mid-session (fresh tab included) — same environment family as phase-3 screenshot timeouts; Playwright in phase 6 uses its own input pipeline
 
 ## Success Criteria
 - [ ] Drag 3 selected elements → single undo restores all three

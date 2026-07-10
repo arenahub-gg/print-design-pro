@@ -51,11 +51,15 @@ export {
 } from './core/commands/element-commands'
 export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'
 
-// Canvas components (read-only in phase 3; interactions arrive in phase 4)
+// Canvas
 export { default as CanvasViewport } from './components/canvas/CanvasViewport.vue'
 export { useCanvasGestures } from './composables/use-canvas-gestures'
 export { rulerScaleForZoom } from './core/ruler-scale'
 export type { RulerScale } from './core/ruler-scale'
+export { elementAabb, combinedAabb, rotatedRectAabb } from './core/geometry'
+export type { AabbMm, PointMm, RectMm } from './core/geometry'
+export { collectSnapCandidates, snapAabb } from './core/snapping'
+export type { SnapCandidates, SnapResult } from './core/snapping'
 
 // Stores
 export { useDocumentStore } from './stores/document-store'
@@ -63,6 +67,8 @@ export type { DocumentStore } from './stores/document-store'
 export { useHistoryStore } from './stores/history-store'
 export type { HistoryStore } from './stores/history-store'
 export { useSelectionStore } from './stores/selection-store'
-export type { MarqueeRect, SelectionStore } from './stores/selection-store'
+export type { SelectionStore } from './stores/selection-store'
 export { MAX_ZOOM, MIN_ZOOM, useViewportStore } from './stores/viewport-store'
 export type { PagePointMm, ScreenPoint, ViewportStore } from './stores/viewport-store'
+export { useInteractionStore } from './stores/interaction-store'
+export type { InteractionStore } from './stores/interaction-store'

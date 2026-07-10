@@ -2,17 +2,24 @@
 import { computed } from 'vue'
 import type { TemplateElement } from '../../core/schema/elements'
 import { mmToPx } from '../../core/units'
+import { useInteractionStore } from '../../stores/interaction-store'
 
 // Render decision (validated): each element is an absolutely-positioned div
 // carrying the rotate transform; shapes are SVG inside the div, text is
-// styled DOM. Read-only in phase 3 - interaction handles arrive in phase 4.
+// styled DOM. Geometry merges live gesture previews from the interaction
+// store so drags render without touching the document.
 const props = defineProps<{ element: TemplateElement }>()
 
+const interaction = useInteractionStore()
+
+/** Schema state + any live gesture preview. */
+const effective = computed(() => interaction.effectiveElement(props.element))
+
 const box = computed(() => ({
-  left: mmToPx(props.element.xMm),
-  top: mmToPx(props.element.yMm),
-  width: mmToPx(props.element.widthMm),
-  height: mmToPx(props.element.heightMm),
+  left: mmToPx(effective.value.xMm),
+  top: mmToPx(effective.value.yMm),
+  width: mmToPx(effective.value.widthMm),
+  height: mmToPx(effective.value.heightMm),
 }))
 
 const wrapperStyle = computed(() => ({
@@ -20,8 +27,9 @@ const wrapperStyle = computed(() => ({
   top: `${box.value.top}px`,
   width: `${box.value.width}px`,
   height: `${box.value.height}px`,
-  transform: `rotate(${props.element.rotation}deg)`,
+  transform: `rotate(${effective.value.rotation}deg)`,
   transformOrigin: 'center center',
+  cursor: props.element.locked ? 'default' : 'move',
 }))
 
 /** 1pt = 1/72 inch -> px at CSS 96dpi. */

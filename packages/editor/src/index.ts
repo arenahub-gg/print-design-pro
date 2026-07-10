@@ -51,6 +51,11 @@ export {
 } from './core/commands/element-commands'
 export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'
 
+// Shell (primary public component)
+export { default as PrintDesigner } from './components/shell/PrintDesigner.vue'
+export type { EditorLocale } from './locales/messages'
+export { createCircle, createLine, createRect, createText } from './core/element-factories'
+
 // Canvas
 export { default as CanvasViewport } from './components/canvas/CanvasViewport.vue'
 export { useCanvasGestures } from './composables/use-canvas-gestures'

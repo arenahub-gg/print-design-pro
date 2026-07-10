@@ -16,9 +16,9 @@ import { version as editorVersion } from '@pro-print/editor'
     <UButton
       class="mt-8"
       size="lg"
-      disabled
+      to="/templates"
     >
-      Open Designer (coming in phase 5)
+      Open Designer
     </UButton>
   </UContainer>
 </template>

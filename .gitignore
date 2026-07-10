@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.output/
+.nuxt/
+.nitro/
+.cache/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs & OS
+*.log
+Thumbs.db
+.DS_Store
+
+# Editor
+.idea/
+*.local

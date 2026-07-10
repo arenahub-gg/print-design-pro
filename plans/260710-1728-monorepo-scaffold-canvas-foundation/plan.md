@@ -4,7 +4,7 @@ description: >-
   Greenfield monorepo (packages/editor Vue 3 lib + apps/web Nuxt 4) with canvas
   editor foundation: document model, command-pattern undo/redo, zoom/pan,
   rulers/guides, drag/resize/rotate, selection.
-status: pending
+status: completed
 priority: P2
 branch: main
 tags:
@@ -39,7 +39,7 @@ Design decisions locked in brainstorm report — do not re-litigate: clean-room,
 | 3 | [Canvas Foundation](./phase-03-canvas-foundation.md) | Completed |
 | 4 | [Element Interactions](./phase-04-element-interactions.md) | Completed |
 | 5 | [Editor Shell + Nuxt Integration](./phase-05-editor-shell-nuxt-integration.md) | Completed |
-| 6 | [Testing + Verification](./phase-06-testing-verification.md) | Pending |
+| 6 | [Testing + Verification](./phase-06-testing-verification.md) | Completed |
 
 Phases strictly sequential: each depends on previous.
 

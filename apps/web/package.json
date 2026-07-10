@@ -19,6 +19,7 @@
     "pinia": "^3.0.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.3.7"
   }

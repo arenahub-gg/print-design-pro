@@ -1,10 +1,11 @@
 ---
 phase: 6
-title: "Testing + Verification"
-status: pending
-effort: "2-3 days"
+title: Testing + Verification
+status: completed
+effort: 2-3 days
 priority: P2
-dependencies: [5]
+dependencies:
+  - 5
 ---
 
 # Phase 6: Testing + Verification
@@ -42,6 +43,14 @@ docs/
 6. Measure editor dist size (es build gz); record in README badge-style note; flag if zod exceeds phase-2 threshold
 7. Write docs/codebase-summary.md + docs/system-architecture.md (≤800 lines each per docs rule)
 8. Manual verification pass on real browser: keyboard map, dark mode, tablet-width panel collapse
+
+## Implementation Notes (post-completion)
+- 65 vitest tests (units, history, round-trip, snapping/geometry, resize math incl. review-flagged rotated-edge/sign-flip/lockAspect+fromCenter branches, NumberField + PropertiesPanel component tests under happy-dom per-file env)
+- Playwright E2E: single serial acceptance test (fresh context per test = fresh IndexedDB, so flow is one test): create → palette add → mouse drag → undo/redo → panel edit → reload persistence → export → same-id import (phase-5 C1 regression) → reload → manager lists. Passed 3 consecutive runs (29.3/29.4/29.4s, 0 flake). Dev-hydration race solved with toPass retry on the first click
+- CI: .github/workflows/ci.yml — install → lint → build → typecheck (after build: app resolves dist types) → unit tests; E2E local-only round 1
+- Bundle recorded: ES 152KB raw, UMD 123.6KB/34.2KB gz, CSS 13.3KB; zod ~15-18KB gz — AT the phase-2 threshold → evaluate zod/mini vs valibot before npm publish (roadmap phase 7)
+- docs/codebase-summary.md + docs/system-architecture.md written (invariants, v-model contract, layering, decisions)
+- Autosave-failure E2E path deferred (needs IDB fault injection) — covered by unit-level toast handling; noted for round 2
 
 ## Success Criteria
 - [ ] `pnpm test` + `pnpm test:e2e` green from clean clone

@@ -1,0 +1,84 @@
+# Codebase Summary
+
+Round-1 state (2026-07-11). Monorepo map + data flow for contributors.
+
+## Layout
+
+```
+pro-print-designer/          pnpm workspace (pnpm 11, node >= 20)
+├── packages/editor/         @pro-print/editor — embeddable Vue 3 editor library
+│   ├── src/core/            headless logic (NO Vue components)
+│   │   ├── schema/          zod v4 template schema; TS types via z.infer
+│   │   ├── commands/        command pattern + HistoryManager (undo/redo)
+│   │   ├── units.ts         mm <-> CSS px (96dpi); roundMm(0.1mm)
+│   │   ├── geometry.ts      rotated AABB, intersection, marquee math
+│   │   ├── snapping.ts      pure candidate collection + axis snapping
+│   │   ├── resize-math.ts   anchor-fixed rotated resize
+│   │   ├── element-factories.ts  createRect/Line/Circle/Text defaults
+│   │   └── open-template.ts the ONE supported way to open a document
+│   ├── src/stores/          pinia: document, history, selection, viewport, interaction
+│   ├── src/components/
+│   │   ├── canvas/          CanvasViewport/Stage/Page, rulers, grid, guides,
+│   │   │                    element renderers, selection/marquee/snap overlays
+│   │   └── shell/           PrintDesigner (public root), topbar, palette,
+│   │                        properties panel, panel-controls
+│   ├── src/composables/     pointer-drag lifecycle, gestures, interactions,
+│   │                        keyboard map, editor i18n (en/vi)
+│   ├── src/styles/index.css Tailwind 4, `pp` prefix, @theme static tokens, @source "../"
+│   └── playground/          bare Vue 3 bench (`pnpm --filter @pro-print/editor play`)
+└── apps/web/                Nuxt 4 + Nuxt UI 4 app
+    ├── app/pages/           landing, /templates (CRUD grid), /editor/[id] (ssr: false)
+    ├── app/composables/     use-template-repository (IndexedDB via idb)
+    └── e2e/                 Playwright acceptance smoke
+```
+
+## Core invariants
+
+1. **mm is the only stored unit.** Pixels exist only at render/gesture time. `roundMm` applies at command boundaries.
+2. **Every document mutation goes through a Command** dispatched via the history store. Document-store `_` mutators assert this in dev. `loadTemplate` is the single bypass — always use `openTemplate()` (clears history + selection, clones input).
+3. **Element array order = paint/z-order.** No zIndex field.
+4. **Gestures never touch the document until release.** Previews live in the interaction store; commit = one `updateElementsCommand`.
+5. **The library owns zero persistence.** `PrintDesigner` v-model emits debounced snapshots; hosts store them (web app: IndexedDB).
+6. **The store must never hold caller references** — commands clone payloads at execute time (redo corruption otherwise).
+7. **Single editor instance per page** (module-level execution flag, global pinia store ids) — documented limitation.
+
+## Data flow
+
+```
+UI event -> composable gesture -> interaction store preview -> renderers
+        -> (on release) command -> HistoryManager -> document store mutation
+        -> editVersion bump -> PrintDesigner debounced v-model emit
+        -> host autosave (IndexedDB, validated via parseTemplate)
+```
+
+## v-model contract (PrintDesigner)
+
+- Host passes `TemplateDocument`; editor `openTemplate`s it on mount.
+- Editor emits debounced (400ms) cloned snapshots; remembers the emitted object.
+- A modelValue that is NOT the last emitted snapshot object = replacement → reopen (covers same-id JSON import).
+- Open never emits (baseline editVersion suppression) — no phantom saves.
+
+## Testing
+
+- `pnpm test` — vitest: 65 tests (units, history, schema round-trip, snapping,
+  geometry, resize math incl. rotated edge handles, viewport math, shell
+  component tests under happy-dom).
+- `pnpm test:e2e` — Playwright (chromium): full acceptance flow — create →
+  palette add → drag → undo → panel edit → reload persistence → export →
+  same-id import → reload. Passed 3 consecutive runs.
+- CI (GitHub Actions): install → lint → build → typecheck → unit tests.
+
+## Bundle (round-1 measurement)
+
+- `dist/editor.js` (ES) 152KB raw; `dist/editor.umd.cjs` 123.6KB raw / 34.2KB gz;
+  `dist/editor.css` 13.3KB. zod v4 is the dominant dependency (~15-18KB gz) —
+  at the recorded threshold; evaluate `zod/mini` or valibot before npm publish.
+
+## Known limitations / backlog
+
+- Image element: schema stub only. Barcode/QR, table+pagination, print/PDF
+  pipeline, web component wrapper, server sync: roadmap rounds 2+.
+- Dev-guard (`import.meta.env.DEV`) compiles out of dist.
+- Guides' hit bands sit above elements (z-order product call pending).
+- Rotate snap is delta-relative; shift-toggle selection on pointerdown.
+- E2E excluded from CI round 1 (local only).

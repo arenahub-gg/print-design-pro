@@ -16,13 +16,17 @@ Requires Node >= 20 and pnpm >= 11 (pinned via `packageManager` — `corepack en
 
 ```bash
 pnpm install
-pnpm dev        # Nuxt app (apps/web)
+pnpm dev        # Nuxt app (apps/web) at :3000
 pnpm dev:lib    # editor library watch build
+pnpm --filter @pro-print/editor play   # bare Vue 3 playground at :5173
 pnpm build      # build all packages
-pnpm test       # unit tests (vitest)
+pnpm test       # unit + component tests (vitest, 65 tests)
+pnpm test:e2e   # Playwright acceptance flow (chromium)
 pnpm lint       # eslint
-pnpm typecheck  # vue-tsc / nuxt typecheck
+pnpm typecheck  # vue-tsc / nuxt typecheck (build first: app resolves dist types)
 ```
+
+Editor bundle (round 1): ES 152KB raw / UMD 34.2KB gz including zod + styles.
 
 ## Roadmap
 

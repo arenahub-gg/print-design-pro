@@ -1,14 +1,22 @@
 ---
-title: "Pro Print Designer - Round 1: Monorepo Scaffold + Canvas Foundation"
-description: "Greenfield monorepo (packages/editor Vue 3 lib + apps/web Nuxt 4) with canvas editor foundation: document model, command-pattern undo/redo, zoom/pan, rulers/guides, drag/resize/rotate, selection."
+title: 'Pro Print Designer - Round 1: Monorepo Scaffold + Canvas Foundation'
+description: >-
+  Greenfield monorepo (packages/editor Vue 3 lib + apps/web Nuxt 4) with canvas
+  editor foundation: document model, command-pattern undo/redo, zoom/pan,
+  rulers/guides, drag/resize/rotate, selection.
 status: pending
 priority: P2
-branch: "main"
-tags: [greenfield, monorepo, nuxt4, editor, clean-room]
+branch: main
+tags:
+  - greenfield
+  - monorepo
+  - nuxt4
+  - editor
+  - clean-room
 blockedBy: []
 blocks: []
-created: "2026-07-10T10:50:14.504Z"
-createdBy: "ck:plan"
+created: '2026-07-10T10:50:14.504Z'
+createdBy: 'ck:plan'
 source: skill
 ---
 
@@ -26,7 +34,7 @@ Design decisions locked in brainstorm report — do not re-litigate: clean-room,
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Monorepo Scaffold](./phase-01-monorepo-scaffold.md) | Pending |
+| 1 | [Monorepo Scaffold](./phase-01-monorepo-scaffold.md) | Completed |
 | 2 | [Core Document Model + History](./phase-02-core-document-model-history.md) | Pending |
 | 3 | [Canvas Foundation](./phase-03-canvas-foundation.md) | Pending |
 | 4 | [Element Interactions](./phase-04-element-interactions.md) | Pending |

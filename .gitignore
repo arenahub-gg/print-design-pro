@@ -18,6 +18,11 @@ dist/
 Thumbs.db
 .DS_Store
 
+# Test & build metadata
+coverage/
+*.tsbuildinfo
+
 # Editor
 .idea/
+.vscode/
 *.local

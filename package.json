@@ -12,11 +12,13 @@
     "dev": "pnpm --filter web dev",
     "dev:lib": "pnpm --filter @pro-print/editor dev",
     "test": "vitest run",
+    "test:e2e": "pnpm --filter web exec playwright test",
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-vue": "^6.0.7",
     "eslint": "^10.6.0",
     "eslint-plugin-vue": "^10.9.2",
     "typescript": "^5.9.3",

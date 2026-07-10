@@ -87,6 +87,67 @@ describe('resizeRect (unrotated)', () => {
   })
 })
 
+describe('resizeRect (review-flagged branches)', () => {
+  it('rotated EDGE handle preserves the cross axis (rotateBackAxis path)', () => {
+    const rotation = 30
+    const next = resizeRect({
+      rect: BASE, // 40x20 at (10,10), center (30,20)
+      rotationDeg: rotation,
+      handle: 'e',
+      pointer: { xMm: 80, yMm: 45 },
+      lockAspect: false,
+      fromCenter: false,
+    })
+    // Height must be untouched by an east-edge drag.
+    expect(next.heightMm).toBe(20)
+    // The west-edge midpoint (anchor) must stay fixed in world space.
+    const worldPoint = (rect: typeof BASE, localX: number, deg: number) => {
+      const cx = rect.xMm + rect.widthMm / 2
+      const cy = rect.yMm + rect.heightMm / 2
+      const rad = (deg * Math.PI) / 180
+      return {
+        x: cx + localX * Math.cos(rad),
+        y: cy + localX * Math.sin(rad),
+      }
+    }
+    const anchorBefore = worldPoint(BASE, -BASE.widthMm / 2, rotation)
+    const anchorAfter = worldPoint(next, -next.widthMm / 2, rotation)
+    expect(anchorAfter.x).toBeCloseTo(anchorBefore.x, 4)
+    expect(anchorAfter.y).toBeCloseTo(anchorBefore.y, 4)
+  })
+
+  it('dragging through the anchor mirrors the box instead of collapsing', () => {
+    // se handle dragged past the nw anchor (10,10): box flips to the other side.
+    const next = resizeRect({
+      rect: BASE,
+      rotationDeg: 0,
+      handle: 'se',
+      pointer: { xMm: -20, yMm: -5 },
+      lockAspect: false,
+      fromCenter: false,
+    })
+    expect(next.widthMm).toBeCloseTo(30, 6)
+    expect(next.heightMm).toBeCloseTo(15, 6)
+    // Box now extends to the negative side of the anchor.
+    expect(next.xMm).toBeCloseTo(-20, 6)
+    expect(next.yMm).toBeCloseTo(-5, 6)
+  })
+
+  it('lockAspect + fromCenter keeps both the ratio and the center', () => {
+    const next = resizeRect({
+      rect: BASE, // ratio 2:1, center (30,20)
+      rotationDeg: 0,
+      handle: 'se',
+      pointer: { xMm: 55, yMm: 22 },
+      lockAspect: true,
+      fromCenter: true,
+    })
+    expect(next.widthMm / next.heightMm).toBeCloseTo(2, 6)
+    expect(next.xMm + next.widthMm / 2).toBeCloseTo(30, 6)
+    expect(next.yMm + next.heightMm / 2).toBeCloseTo(20, 6)
+  })
+})
+
 describe('resizeRect (rotated)', () => {
   it('anchor corner stays fixed in world space for a rotated rect', () => {
     const rotation = 30

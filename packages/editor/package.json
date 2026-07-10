@@ -36,6 +36,8 @@
     "@tailwindcss/vite": "^4.3.2",
     "@types/node": "^26.1.1",
     "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.10.6",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.3.2",
     "vite": "^8.1.4",

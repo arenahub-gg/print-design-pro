@@ -1,10 +1,11 @@
 ---
 phase: 5
-title: "Editor Shell + Nuxt Integration"
-status: pending
-effort: "4-5 days"
+title: Editor Shell + Nuxt Integration
+status: completed
+effort: 4-5 days
 priority: P1
-dependencies: [4]
+dependencies:
+  - 4
 ---
 
 # Phase 5: Editor Shell + Nuxt Integration
@@ -50,6 +51,15 @@ v-model contract: PrintDesigner emits debounced document snapshots; app owns per
 6. Nuxt pages: templates grid (Nuxt UI cards/modals for create/rename/delete confirm), editor page ClientOnly + loading state
 7. use-template-repository (idb lib): schema v1, migration hook stub; use-autosave with dirty flag from history stack index
 8. Export/Import buttons in topbar #actions slot (app side): download .json / file-picker import with zod error toast
+
+## Implementation Notes (post-review)
+- Deviations: messages as typed TS (`locales/messages.ts`) not JSON; NumberField native input (no Reka UI dep — zero-dep shell); drag-in from palette deferred (click covers flow)
+- v-model contract hardened after review: emitted-snapshot object-identity guard (echo vs same-id replacement — fixes CRITICAL import-never-applied bug), open-baseline editVersion suppresses phantom save-on-open (multi-tab clobber window), flush-on-unmount + pagehide flush in host
+- Review fixes: autosave failure toast (unhandled rejection), locked elements read-only in text section + disabled geometry fields, Escape-cancel rename (Chromium detached-blur), route param watch, templates load error state, normalization no-op commands dropped, i18n unknown-locale fallback
+- Element factories added (`element-factories.ts`) — single source of defaults (closes phase-2 review S7)
+- Verified live: templates CRUD → editor route → palette add rect/text → properties text edit → autosave → reload persists (IndexedDB), playground mounts full shell in bare Vue 3 (vi locale)
+- Phase-6 E2E must cover: import-into-open-editor (C1 regression), autosave failure path
+- Open question (review): should "open template" bump updatedAt intentionally? Currently NO (phantom save suppressed) — recently-edited ordering preserved
 
 ## Success Criteria
 - [ ] Create template → edit → reload browser → state intact (IndexedDB)

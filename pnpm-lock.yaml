@@ -32,12 +32,21 @@ importers:
       '@nuxt/ui':
         specifier: ^4.9.0
         version: 4.9.0(388a0e634d14c6c86fcaa4506351158c)
+      '@pinia/nuxt':
+        specifier: ^0.11.3
+        version: 0.11.3(magicast@0.5.3)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))
       '@pro-print/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      idb:
+        specifier: ^8.0.3
+        version: 8.0.3
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@parcel/watcher@2.5.6)(@types/node@26.1.1)(@vue/compiler-sfc@3.5.39)(cac@6.7.14)(db0@0.3.4)(esbuild@0.28.1)(eslint@10.6.0(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.32.0)(magicast@0.5.3)(optionator@0.9.4)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.5)(rollup-plugin-visualizer@7.0.1(rolldown@1.1.5)(rollup@4.62.2))(rollup@4.62.2)(srvx@0.11.21)(terser@5.49.0)(typescript@5.9.3)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.0))(vue-tsc@3.3.7(typescript@5.9.3))(yaml@2.9.0)
+      pinia:
+        specifier: ^3.0.4
+        version: 3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -1383,6 +1392,11 @@ packages:
   '@parcel/watcher@2.5.6':
     resolution: {integrity: sha512-tmmZ3lQxAe/k/+rNnXQRawJ4NjxO2hqiOLTHvWchtGZULp4RyFeh6aU4XdOYBFe2KE1oShQTv4AblOs2iOrNnQ==}
     engines: {node: '>= 10.0.0'}
+
+  '@pinia/nuxt@0.11.3':
+    resolution: {integrity: sha512-7WVNHpWx4qAEzOlnyrRC88kYrwnlR/PrThWT0XI1dSNyUAXu/KBv9oR37uCgYkZroqP5jn8DfzbkNF3BtKvE9w==}
+    peerDependencies:
+      pinia: ^3.0.4
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -3247,6 +3261,9 @@ packages:
   human-signals@5.0.0:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
+
+  idb@8.0.3:
+    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -6468,6 +6485,13 @@ snapshots:
       '@parcel/watcher-win32-ia32': 2.5.6
       '@parcel/watcher-win32-x64': 2.5.6
 
+  '@pinia/nuxt@0.11.3(magicast@0.5.3)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))':
+    dependencies:
+      '@nuxt/kit': 4.4.8(magicast@0.5.3)
+      pinia: 3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
+    transitivePeerDependencies:
+      - magicast
+
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
@@ -8315,6 +8339,8 @@ snapshots:
   httpxy@0.5.5: {}
 
   human-signals@5.0.0: {}
+
+  idb@8.0.3: {}
 
   ieee754@1.2.1: {}
 

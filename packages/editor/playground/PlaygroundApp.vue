@@ -1,19 +1,27 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import CanvasViewport from '../src/components/canvas/CanvasViewport.vue'
+import { onMounted, ref } from 'vue'
+import PrintDesigner from '../src/components/shell/PrintDesigner.vue'
 import { addElementCommand } from '../src/core/commands/element-commands'
+import { createEmptyTemplate, type TemplateDocument } from '../src/core/schema/template'
 import { newId } from '../src/core/schema/template'
 import '../src/styles/index.css'
 import { useDocumentStore } from '../src/stores/document-store'
 import { useHistoryStore } from '../src/stores/history-store'
-import { useViewportStore } from '../src/stores/viewport-store'
 
+// Playground now mounts the FULL shell (topbar/palette/canvas/properties) in
+// a bare Vue 3 app - the strongest proof the library needs no Nuxt.
 const doc = useDocumentStore()
 const history = useHistoryStore()
-const viewport = useViewportStore()
 
-// Seed a representative document so pan/zoom/ruler/grid work has something
-// real to render (100-element perf case: press the "seed 100" button).
+const template = ref<TemplateDocument>(createEmptyTemplate('Playground'))
+const lastSnapshotAt = ref<string>('never')
+
+function onUpdate(snapshot: TemplateDocument): void {
+  template.value = snapshot
+  lastSnapshotAt.value = new Date().toLocaleTimeString()
+}
+
+// Perf bench: seed extra elements through commands (also exercises history).
 function seed(count: number): void {
   history.transact(`Seed ${count} elements`, () => {
     for (let i = 0; i < count; i++) {
@@ -39,62 +47,26 @@ function seed(count: number): void {
   })
 }
 
-onMounted(() => {
-  history.dispatch(addElementCommand(doc, {
-    id: newId(),
-    type: 'text',
-    name: 'Title',
-    xMm: 20,
-    yMm: 15,
-    widthMm: 170,
-    heightMm: 15,
-    rotation: 0,
-    locked: false,
-    visible: true,
-    content: 'Pro Print Designer — playground',
-    fontSizePt: 24,
-    fontWeight: 700,
-    align: 'center',
-    color: '#0f172a',
-  }))
-  seed(12)
-})
+onMounted(() => seed(6))
 </script>
 
 <template>
   <div style="display:flex; flex-direction:column; height:100%">
-    <div style="display:flex; gap:8px; padding:8px; border-bottom:1px solid #e2e8f0; font:13px system-ui">
-      <button @click="viewport.zoomAt({ x: 400, y: 300 }, viewport.zoom * 1.25)">
-        zoom +
-      </button>
-      <button @click="viewport.zoomAt({ x: 400, y: 300 }, viewport.zoom / 1.25)">
-        zoom −
-      </button>
-      <button @click="viewport.setZoom(1)">
-        100%
-      </button>
-      <button @click="viewport.showGrid = !viewport.showGrid">
-        grid: {{ viewport.showGrid ? 'on' : 'off' }}
-      </button>
-      <button
-        :disabled="!history.canUndo"
-        @click="history.undo()"
-      >
-        undo
-      </button>
-      <button
-        :disabled="!history.canRedo"
-        @click="history.redo()"
-      >
-        redo
-      </button>
-      <button @click="seed(100)">
-        seed 100
-      </button>
-      <span style="margin-left:auto">{{ viewport.zoomPercent }}% · {{ doc.elements.length }} elements</span>
-    </div>
-    <div style="flex:1; min-height:0">
-      <CanvasViewport />
-    </div>
+    <PrintDesigner
+      :model-value="template"
+      locale="vi"
+      style="flex:1; min-height:0"
+      @update:model-value="onUpdate"
+    >
+      <template #actions>
+        <button
+          style="font:12px system-ui; padding:4px 8px"
+          @click="seed(100)"
+        >
+          seed 100
+        </button>
+        <span style="font:11px system-ui; color:#94a3b8">snapshot: {{ lastSnapshotAt }}</span>
+      </template>
+    </PrintDesigner>
   </div>
 </template>

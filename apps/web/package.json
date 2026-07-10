@@ -12,8 +12,11 @@
   },
   "dependencies": {
     "@nuxt/ui": "^4.9.0",
+    "@pinia/nuxt": "^0.11.3",
     "@pro-print/editor": "workspace:*",
-    "nuxt": "^4.4.8"
+    "idb": "^8.0.3",
+    "nuxt": "^4.4.8",
+    "pinia": "^3.0.4"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

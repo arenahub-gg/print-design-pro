@@ -1,19 +1,26 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { addGuideCommand } from '../../core/commands/element-commands'
 import { newId, type Guide } from '../../core/schema/template'
 import { roundMm } from '../../core/units'
 import { useCanvasGestures } from '../../composables/use-canvas-gestures'
+import { useEditorKeyboard } from '../../composables/use-editor-keyboard'
+import { useElementInteractions } from '../../composables/use-element-interactions'
 import { usePointerDrag } from '../../composables/use-pointer-drag'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
+import { useInteractionStore } from '../../stores/interaction-store'
+import { useSelectionStore } from '../../stores/selection-store'
 import { useViewportStore } from '../../stores/viewport-store'
 import CanvasRuler from './CanvasRuler.vue'
 import CanvasStage from './CanvasStage.vue'
 import ElementLayer from './ElementLayer.vue'
 import GridOverlay from './GridOverlay.vue'
 import GuideLayer from './GuideLayer.vue'
+import MarqueeOverlay from './MarqueeOverlay.vue'
 import PageView from './PageView.vue'
+import SelectionOverlay from './SelectionOverlay.vue'
+import SnapLineOverlay from './SnapLineOverlay.vue'
 
 // Viewport shell: owns the container, rulers, gestures, fit-on-mount, and
 // the drag-a-guide-out-of-a-ruler interaction. Page content lives on the
@@ -23,10 +30,25 @@ const RULER_PX = 24
 const doc = useDocumentStore()
 const history = useHistoryStore()
 const viewport = useViewportStore()
+const selection = useSelectionStore()
+const interaction = useInteractionStore()
 
 const containerRef = ref<HTMLElement | null>(null)
 const { isSpaceDown } = useCanvasGestures(containerRef, viewport)
 const drag = usePointerDrag()
+const interactions = useElementInteractions(containerRef, { doc, history, selection, viewport, interaction })
+useEditorKeyboard(containerRef, { doc, history, selection, interaction })
+
+// Structural commands (delete, duplicate-undo, import) can orphan selected
+// ids - prune after every history change so selection never references
+// elements that no longer exist.
+watch(() => history.editVersion, () => {
+  selection.prune(doc.elements.map(element => element.id))
+})
+
+function onStagePointerDown(event: PointerEvent): void {
+  interactions.onStagePointerDown(event, isSpaceDown.value)
+}
 
 /** Guide preview while dragging from a ruler (not yet in the document). */
 const draftGuide = ref<Guide | null>(null)
@@ -118,12 +140,19 @@ defineExpose({ fit })
     class="pp:relative pp:h-full pp:w-full pp:overflow-hidden pp:bg-(--color-surface-canvas) pp:outline-none"
     :class="cursorClass"
     data-pp-viewport
+    @pointerdown="onStagePointerDown"
   >
     <CanvasStage>
       <PageView>
         <GridOverlay v-if="viewport.showGrid" />
         <ElementLayer />
         <GuideLayer :draft-guide="draftGuide" />
+        <SnapLineOverlay />
+        <MarqueeOverlay />
+        <SelectionOverlay
+          @resize-start="interactions.startResize"
+          @rotate-start="interactions.startRotate"
+        />
       </PageView>
     </CanvasStage>
 

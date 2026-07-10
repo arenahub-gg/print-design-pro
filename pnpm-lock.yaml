@@ -31,7 +31,7 @@ importers:
     dependencies:
       '@nuxt/ui':
         specifier: ^4.9.0
-        version: 4.9.0(232616cef0d8171cc822837c0219f5ee)
+        version: 4.9.0(388a0e634d14c6c86fcaa4506351158c)
       '@pro-print/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -47,6 +47,10 @@ importers:
         version: 3.3.7(typescript@5.9.3)
 
   packages/editor:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.2
@@ -69,6 +73,9 @@ importers:
       vite-plugin-dts:
         specifier: ^5.0.3
         version: 5.0.3(@vue/language-core@3.3.7)(esbuild@0.28.1)(rolldown@1.1.5)(rollup@4.62.2)(typescript@5.9.3)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.0))
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.0))
       vue:
         specifier: ^3.5.39
         version: 3.5.39(typescript@5.9.3)
@@ -5115,6 +5122,9 @@ packages:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
 
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -6010,7 +6020,7 @@ snapshots:
       rc9: 3.0.1
       std-env: 4.2.0
 
-  '@nuxt/ui@4.9.0(232616cef0d8171cc822837c0219f5ee)':
+  '@nuxt/ui@4.9.0(388a0e634d14c6c86fcaa4506351158c)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@iconify/vue': 5.0.1(vue@3.5.39(typescript@5.9.3))
@@ -6080,6 +6090,7 @@ snapshots:
       '@internationalized/date': 3.12.2
       '@internationalized/number': 3.6.7
       vue-router: 5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.28.1)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.5)(rollup@4.62.2)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
+      zod: 4.4.3
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -10403,3 +10414,5 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod@4.4.3: {}

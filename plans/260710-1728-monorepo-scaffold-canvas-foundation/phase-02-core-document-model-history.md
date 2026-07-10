@@ -1,10 +1,11 @@
 ---
 phase: 2
-title: "Core Document Model + History"
-status: pending
-effort: "3-4 days"
+title: Core Document Model + History
+status: completed
+effort: 3-4 days
 priority: P1
-dependencies: [1]
+dependencies:
+  - 1
 ---
 
 # Phase 2: Core Document Model + History
@@ -51,6 +52,12 @@ Data flow: UI → dispatch(command) → HistoryManager.execute → store mutatio
 5. Pinia stores; document-store guards: reject mutations outside command execution (dev-mode assertion)
 6. Export/import JSON: `exportTemplate(doc): string`, `importTemplate(json): TemplateDocument` with zod error surfacing
 7. Vitest: history (50+ undo, transaction collapse, redo invalidation on new command), CRUD, round-trip
+
+## Implementation Notes (post-review)
+- Deviation: no zIndex field — element array order IS paint/z-order (single source of truth); reorder command covers z changes
+- Added beyond plan (code-review driven): `openTemplate()` helper (load + clear history/selection — prevents stale-command corruption), `renameTemplateCommand` (rename undoable + ticks editVersion), id-uniqueness superRefine on import, clone-at-execute in add commands (fixes shared-reference redo corruption), cross-variant patch key filtering
+- zod bundle impact recorded: UMD total 21.1kB gz (measure ES + decide zod/mini vs valibot in phase 6)
+- Known: dev-guard (`import.meta.env.DEV`) compiles out of dist — active in tests/dev source, not in published bundle (acceptable)
 
 ## Success Criteria
 - [ ] Round-trip test: export → import → deepEqual passes

@@ -11,6 +11,7 @@ import { MM_PER_INCH } from '../core/units'
 import { paintBarcode } from './element-painters/paint-barcode'
 import { paintImage, type ImageCache } from './element-painters/paint-image'
 import { paintQr } from './element-painters/paint-qr'
+import { paintTable } from './element-painters/paint-table'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT, wrapText } from './text-layout'
 
 // Schema -> Canvas2D print renderer. THE single source of print output: PNG
@@ -125,6 +126,9 @@ async function paintByType(
       break
     case 'barcode':
       await paintBarcode(ctx, element, pxPerMm)
+      break
+    case 'table':
+      paintTable(ctx, element)
       break
   }
 }

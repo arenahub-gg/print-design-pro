@@ -24,6 +24,8 @@ export {
 export type {
   BarcodeElement,
   BarcodeFormat,
+  TableColumn,
+  TableElement,
   CircleElement,
   ElementPatch,
   ElementType,
@@ -60,7 +62,9 @@ export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'
 // Shell (primary public component)
 export { default as PrintDesigner } from './components/shell/PrintDesigner.vue'
 export type { EditorLocale } from './locales/messages'
-export { createBarcode, createCircle, createImage, createLine, createQr, createRect, createText } from './core/element-factories'
+export { createBarcode, createCircle, createImage, createLine, createQr, createRect, createTable, createText } from './core/element-factories'
+export { computeTableLayout } from './core/table-layout'
+export type { TableLayout, TableMeasurer } from './core/table-layout'
 
 // Print render pipeline
 export { renderToCanvas } from './render/render-engine'

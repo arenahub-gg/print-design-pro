@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, toRaw, toRef, watch } from 'vue'
 import { provideEditorI18n } from '../../composables/use-editor-i18n'
 import { cloneJson } from '../../core/clone'
 import { openTemplate } from '../../core/open-template'
@@ -57,8 +57,15 @@ async function printNow(): Promise<void> {
 let lastEmittedSnapshot: TemplateDocument | null = null
 /** editVersion right after open (history.clear bumps it) - suppresses the phantom snapshot/save an open would otherwise trigger. */
 let openBaselineVersion = -1
+let emitTimer: ReturnType<typeof setTimeout> | null = null
 
 function open(next: TemplateDocument): void {
+  // A pending emit from the PREVIOUS document must never fire after a
+  // replacement - it would snapshot the new document and phantom-save it.
+  if (emitTimer) {
+    clearTimeout(emitTimer)
+    emitTimer = null
+  }
   openTemplate(next, { document: doc, history, selection })
   openBaselineVersion = history.editVersion
 }
@@ -67,14 +74,16 @@ onMounted(() => open(props.modelValue))
 
 // Any modelValue that is not our own emitted snapshot is a document
 // replacement (template switch OR same-id import) and reopens the editor.
+// toRaw: hosts keep the document in a ref(), which hands back a reactive
+// PROXY of the snapshot we emitted - identity must compare raw objects or
+// every echo would reopen (clearing selection and undo history).
 watch(() => props.modelValue, (next) => {
-  if (next !== lastEmittedSnapshot)
+  if (toRaw(next) !== lastEmittedSnapshot)
     open(next)
 })
 
 // Debounced snapshot emission keyed off the edit counter.
 const EMIT_DEBOUNCE_MS = 400
-let emitTimer: ReturnType<typeof setTimeout> | null = null
 watch(() => history.editVersion, (version) => {
   if (version === openBaselineVersion)
     return

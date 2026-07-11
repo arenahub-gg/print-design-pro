@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { ImageTooLargeError, pickImageFile, readImage } from '../../composables/use-image-picker'
 import { addElementCommand } from '../../core/commands/element-commands'
-import { createBarcode, createCircle, createImage, createLine, createQr, createRect, createText } from '../../core/element-factories'
+import { createBarcode, createCircle, createImage, createLine, createQr, createRect, createTable, createText } from '../../core/element-factories'
 import type { TemplateElement } from '../../core/schema/elements'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
@@ -48,6 +48,7 @@ const TILES = [
   { key: 'text', labelKey: 'palette.text', create: createText },
   { key: 'qr', labelKey: 'palette.qr', create: createQr },
   { key: 'barcode', labelKey: 'palette.barcode', create: createBarcode },
+  { key: 'table', labelKey: 'palette.table', create: createTable },
 ] as const
 
 function addElement(create: (place: { centerXMm: number, centerYMm: number }) => TemplateElement): void {
@@ -149,6 +150,43 @@ function addElement(create: (place: { centerXMm: number, centerYMm: number }) =>
               y="23"
               width="3"
               height="3"
+            />
+          </g>
+          <g
+            v-else-if="tile.key === 'table'"
+            stroke="currentColor"
+            fill="none"
+          >
+            <rect
+              x="5"
+              y="7"
+              width="22"
+              height="18"
+              rx="1"
+            />
+            <line
+              x1="5"
+              y1="13"
+              x2="27"
+              y2="13"
+            />
+            <line
+              x1="5"
+              y1="19"
+              x2="27"
+              y2="19"
+            />
+            <line
+              x1="14"
+              y1="7"
+              x2="14"
+              y2="25"
+            />
+            <line
+              x1="20"
+              y1="7"
+              x2="20"
+              y2="25"
             />
           </g>
           <g

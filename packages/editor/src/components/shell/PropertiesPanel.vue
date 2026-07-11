@@ -9,8 +9,10 @@ import {
   type ElementPatch,
   type ImageElement,
   type QrElement,
+  type TableElement,
   type TextElement,
 } from '../../core/schema/elements'
+import TableSection from './panel-sections/TableSection.vue'
 import { roundMm } from '../../core/units'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
@@ -40,6 +42,9 @@ const singleQr = computed<QrElement | null>(() =>
 )
 const singleBarcode = computed<BarcodeElement | null>(() =>
   single.value?.type === 'barcode' ? single.value : null,
+)
+const singleTable = computed<TableElement | null>(() =>
+  single.value?.type === 'table' ? single.value : null,
 )
 
 /** Commit a patch on the single selected element (skips locked). */
@@ -225,6 +230,11 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           {{ imageError }}
         </p>
       </section>
+
+      <TableSection
+        v-if="singleTable"
+        :element="singleTable"
+      />
 
       <section
         v-if="singleQr"

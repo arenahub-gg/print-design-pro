@@ -72,7 +72,35 @@ export const barcodeElementSchema = baseElementSchema.extend({
   lineColor: z.string(),
 })
 
+export const tableColumnSchema = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  /** Relative WEIGHT - normalized to the element's widthMm at layout time. */
+  widthMm: z.number().positive(),
+})
+
+export const tableElementSchema = baseElementSchema.extend({
+  type: z.literal('table'),
+  columns: z.array(tableColumnSchema).min(1),
+  /** rows[r][c]; ragged rows are legal - missing cells read as ''. */
+  rows: z.array(z.array(z.string())),
+  fontSizePt: z.number().positive(),
+  showHeader: z.boolean(),
+  headerBackground: z.string(),
+  borderColor: z.string(),
+  borderWidthMm: z.number().min(0),
+  cellPaddingMm: z.number().min(0),
+}).superRefine((table, ctx) => {
+  const seen = new Set<string>()
+  table.columns.forEach((column, index) => {
+    if (seen.has(column.id))
+      ctx.addIssue({ code: 'custom', path: ['columns', index, 'id'], message: 'Duplicate column id' })
+    seen.add(column.id)
+  })
+})
+
 export const elementSchema = z.discriminatedUnion('type', [
+  tableElementSchema,
   rectElementSchema,
   lineElementSchema,
   circleElementSchema,
@@ -89,6 +117,8 @@ export type TextElement = z.infer<typeof textElementSchema>
 export type ImageElement = z.infer<typeof imageElementSchema>
 export type QrElement = z.infer<typeof qrElementSchema>
 export type BarcodeElement = z.infer<typeof barcodeElementSchema>
+export type TableColumn = z.infer<typeof tableColumnSchema>
+export type TableElement = z.infer<typeof tableElementSchema>
 export type BarcodeFormat = (typeof BARCODE_FORMATS)[number]
 export type TemplateElement = z.infer<typeof elementSchema>
 export type ElementType = TemplateElement['type']

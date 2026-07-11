@@ -21,7 +21,7 @@ const overlayRef = ref<HTMLElement | null>(null)
 
 watch(() => props.open, async (open) => {
   if (open) {
-    render()
+    void render()
     // Focus the overlay so Escape works without an extra click.
     await nextTick()
     overlayRef.value?.focus()
@@ -31,9 +31,9 @@ watch(() => props.open, async (open) => {
   }
 })
 
-function render(): void {
+async function render(): Promise<void> {
   // Preview at 150 DPI: sharp enough on screen, 4x cheaper than print DPI.
-  const canvas = renderToCanvas(cloneJson(doc.document), { dpi: 150 })
+  const canvas = await renderToCanvas(cloneJson(doc.document), { dpi: 150 })
   previewUrl.value = canvas.toDataURL('image/png')
 }
 

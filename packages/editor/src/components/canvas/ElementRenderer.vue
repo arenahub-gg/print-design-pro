@@ -4,6 +4,8 @@ import type { TemplateElement } from '../../core/schema/elements'
 import { mmToPx } from '../../core/units'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
+import BarcodeView from './elements/BarcodeView.vue'
+import QrView from './elements/QrView.vue'
 
 // Render decision (validated): each element is an absolutely-positioned div
 // carrying the rotate transform; shapes are SVG inside the div, text is
@@ -107,6 +109,33 @@ function ptToPx(pt: number): number {
     >{{ element.content }}</div>
     <!-- eslint-enable vue/multiline-html-element-content-newline -->
 
-    <!-- image: schema stub, no renderer until a later round -->
+    <QrView
+      v-else-if="element.type === 'qr'"
+      :element="element"
+    />
+
+    <BarcodeView
+      v-else-if="element.type === 'barcode'"
+      :element="element"
+    />
+
+    <template v-else-if="element.type === 'image'">
+      <!-- pointer-events none: the wrapper owns all gestures -->
+      <img
+        v-if="element.src"
+        :src="element.src"
+        alt=""
+        draggable="false"
+        class="pp:pointer-events-none pp:block pp:h-full pp:w-full"
+        style="object-fit: fill"
+      >
+      <!-- editor-only placeholder; print paints nothing for a missing src -->
+      <div
+        v-else
+        class="pp:flex pp:h-full pp:w-full pp:items-center pp:justify-center pp:border pp:border-dashed pp:border-slate-300 pp:text-[10px] pp:text-slate-400"
+      >
+        ?
+      </div>
+    </template>
   </div>
 </template>

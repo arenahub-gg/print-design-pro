@@ -59,6 +59,26 @@ describe('template export/import round-trip', () => {
     expect(zodError.issues[0]?.path).toEqual(['elements', 0, 'widthMm'])
   })
 
+  it('round-trips qr, barcode, and image elements', async () => {
+    const { createBarcode, createImage, createQr } = await import('../element-factories')
+    const doc = createEmptyTemplate()
+    doc.elements.push(
+      createQr({ centerXMm: 30, centerYMm: 30 }, 'https://pro.print/vi?x=1'),
+      createBarcode({ centerXMm: 60, centerYMm: 60 }, '4006381333931'),
+      createImage({ centerXMm: 90, centerYMm: 90 }, 'data:image/png;base64,AAA', 1.5),
+    )
+    const restored = importTemplate(exportTemplate(doc))
+    expect(restored).toEqual(doc)
+  })
+
+  it('rejects unknown barcode formats', async () => {
+    const { createBarcode } = await import('../element-factories')
+    const doc = createEmptyTemplate()
+    const barcode = createBarcode({ centerXMm: 30, centerYMm: 30 })
+    doc.elements.push({ ...barcode, format: 'QRQR' as never })
+    expect(() => parseTemplate(JSON.parse(JSON.stringify(doc)))).toThrow()
+  })
+
   it('rejects duplicate element ids on import', () => {
     const doc = createEmptyTemplate()
     const text = makeText()

@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
+import { ImageTooLargeError, pickImageFile, readImage } from '../../composables/use-image-picker'
 import { updateElementsCommand } from '../../core/commands/element-commands'
-import type { ElementPatch, TextElement } from '../../core/schema/elements'
+import {
+  BARCODE_FORMATS,
+  type BarcodeElement,
+  type ElementPatch,
+  type ImageElement,
+  type QrElement,
+  type TextElement,
+} from '../../core/schema/elements'
 import { roundMm } from '../../core/units'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
@@ -24,6 +32,22 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
 const singleText = computed<TextElement | null>(() =>
   single.value?.type === 'text' ? single.value : null,
 )
+const singleImage = computed<ImageElement | null>(() =>
+  single.value?.type === 'image' ? single.value : null,
+)
+const singleQr = computed<QrElement | null>(() =>
+  single.value?.type === 'qr' ? single.value : null,
+)
+const singleBarcode = computed<BarcodeElement | null>(() =>
+  single.value?.type === 'barcode' ? single.value : null,
+)
+
+/** Commit a patch on the single selected element (skips locked). */
+function commitSingle(id: string, locked: boolean, patch: ElementPatch, label: string): void {
+  if (locked)
+    return
+  history.dispatch(updateElementsCommand(doc, [{ id, patch }], label))
+}
 
 /** Shared numeric value across the selection, or null when mixed. */
 function shared(key: 'xMm' | 'yMm' | 'widthMm' | 'heightMm' | 'rotation'): number | null {
@@ -65,6 +89,30 @@ function commitRotation(value: number): void {
 
 function toggleLock(): void {
   apply({ locked: !allLocked.value } as ElementPatch, allLocked.value ? 'Unlock' : 'Lock', { includeLocked: true })
+}
+
+const imageError = ref<string | null>(null)
+
+async function replaceImage(): Promise<void> {
+  if (!singleImage.value || singleImage.value.locked)
+    return
+  imageError.value = null
+  const file = await pickImageFile()
+  if (!file)
+    return
+  try {
+    const { src } = await readImage(file)
+    history.dispatch(updateElementsCommand(
+      doc,
+      [{ id: singleImage.value.id, patch: { src } as ElementPatch }],
+      'Replace image',
+    ))
+  }
+  catch (error) {
+    imageError.value = error instanceof ImageTooLargeError
+      ? t('palette.imageTooLarge')
+      : t('palette.imageInvalid')
+  }
 }
 
 function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 'fontWeight' | 'align'>>, label: string): void {
@@ -154,6 +202,107 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
       </section>
 
       <section
+        v-if="singleImage"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-image-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+          {{ t('palette.image') }}
+        </h3>
+        <button
+          type="button"
+          class="pp:rounded-lg pp:border pp:border-slate-200 pp:px-3 pp:py-1.5 pp:text-xs pp:text-slate-600 hover:pp:bg-slate-50 disabled:pp:opacity-40"
+          :disabled="singleImage.locked"
+          data-pp-replace-image
+          @click="replaceImage"
+        >
+          {{ t('panel.replaceImage') }}
+        </button>
+        <p
+          v-if="imageError"
+          class="pp:rounded-lg pp:bg-rose-50 pp:p-2 pp:text-[11px] pp:text-rose-600"
+        >
+          {{ imageError }}
+        </p>
+      </section>
+
+      <section
+        v-if="singleQr"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-qr-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+          {{ t('panel.qr') }}
+        </h3>
+        <textarea
+          :value="singleQr.content"
+          :disabled="singleQr.locked"
+          rows="2"
+          class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:p-2 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none"
+          data-pp-qr-content
+          @change="commitSingle(singleQr.id, singleQr.locked, { content: ($event.target as HTMLTextAreaElement).value } as ElementPatch, 'Edit QR')"
+        />
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+          {{ t('panel.ecLevel') }}
+          <select
+            :value="singleQr.ecLevel"
+            :disabled="singleQr.locked"
+            class="pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1 pp:text-xs"
+            @change="commitSingle(singleQr.id, singleQr.locked, { ecLevel: ($event.target as HTMLSelectElement).value } as ElementPatch, 'QR level')"
+          >
+            <option
+              v-for="level in ['L', 'M', 'Q', 'H']"
+              :key="level"
+              :value="level"
+            >{{ level }}</option>
+          </select>
+        </label>
+      </section>
+
+      <section
+        v-if="singleBarcode"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-barcode-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+          {{ t('panel.barcode') }}
+        </h3>
+        <input
+          :value="singleBarcode.content"
+          :disabled="singleBarcode.locked"
+          type="text"
+          class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1.5 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none"
+          data-pp-barcode-content
+          @change="commitSingle(singleBarcode.id, singleBarcode.locked, { content: ($event.target as HTMLInputElement).value } as ElementPatch, 'Edit barcode')"
+        >
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+          {{ t('panel.format') }}
+          <select
+            :value="singleBarcode.format"
+            :disabled="singleBarcode.locked"
+            class="pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1 pp:text-xs"
+            @change="commitSingle(singleBarcode.id, singleBarcode.locked, { format: ($event.target as HTMLSelectElement).value } as ElementPatch, 'Barcode format')"
+          >
+            <option
+              v-for="format in BARCODE_FORMATS"
+              :key="format"
+              :value="format"
+            >{{ format }}</option>
+          </select>
+        </label>
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+          <input
+            type="checkbox"
+            :checked="singleBarcode.showText"
+            :disabled="singleBarcode.locked"
+            class="pp:accent-brand-500"
+            @change="commitSingle(singleBarcode.id, singleBarcode.locked, { showText: !singleBarcode.showText } as ElementPatch, 'Barcode text')"
+          >
+          {{ t('panel.showText') }}
+        </label>
+      </section>
+
+      <section
         v-if="singleText"
         class="pp:flex pp:flex-col pp:gap-2"
         data-pp-text-section
@@ -163,6 +312,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
         </h3>
         <textarea
           :value="singleText.content"
+          :disabled="singleText.locked"
           rows="3"
           class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:p-2 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none"
           @change="commitText({ content: ($event.target as HTMLTextAreaElement).value }, 'Edit text')"
@@ -179,6 +329,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
             <input
               type="checkbox"
               :checked="singleText.fontWeight === 700"
+              :disabled="singleText.locked"
               class="pp:accent-brand-500"
               @change="commitText({ fontWeight: singleText.fontWeight === 700 ? 400 : 700 }, 'Bold')"
             >

@@ -92,10 +92,24 @@ by the 400ms emit debounce. Raster PDF ≈ 300KB-1MB/page; vector text needs
 font embedding (later round). Print dialog: users must set margins None,
 scale 100% (hinted in preview modal).
 
+## Elements (round 3 complete)
+
+rect · line · circle · text (static) · image (data-URL, ≤2MB upload) ·
+qr (qrcode lib, EC level, square-enforced) · barcode (jsbarcode: CODE128/
+EAN13/EAN8/CODE39/ITF14/UPC, showText, invalid content → editor placeholder,
+print paints nothing). All lazy deps (qrcode/jsbarcode/pdf-lib) are
+externalized — editor.js carries none of them. NOTE: dynamic imports are NOT
+rewritten in the UMD build — script-tag consumers lose QR/barcode/PDF
+features; those require ESM/bundler consumption (the supported path). Element
+checklist for new
+types: zod schema → factory → ElementRenderer branch (or elements/*View.vue)
+→ engine painter (element-painters/) → palette tile → properties section →
+i18n → round-trip test.
+
 ## Known limitations / backlog
 
-- Image element: schema stub only. Barcode/QR, table+pagination, print/PDF
-  pipeline, web component wrapper, server sync: roadmap rounds 2+.
+- Table+pagination, page-number element, web component wrapper, server sync,
+  vector-text PDF, image crop/fit modes, data binding: later rounds.
 - Dev-guard (`import.meta.env.DEV`) compiles out of dist.
 - Guides' hit bands sit above elements (z-order product call pending).
 - Rotate snap is delta-relative; shift-toggle selection on pointerdown.

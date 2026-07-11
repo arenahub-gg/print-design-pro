@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
+import { ImageTooLargeError, pickImageFile, readImage } from '../../composables/use-image-picker'
 import { addElementCommand } from '../../core/commands/element-commands'
-import { createCircle, createLine, createRect, createText } from '../../core/element-factories'
+import { createBarcode, createCircle, createImage, createLine, createQr, createRect, createText } from '../../core/element-factories'
 import type { TemplateElement } from '../../core/schema/elements'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
@@ -14,11 +16,38 @@ const history = useHistoryStore()
 const selection = useSelectionStore()
 const { t } = useEditorI18n()
 
+const imageError = ref<string | null>(null)
+
+async function addImage(): Promise<void> {
+  imageError.value = null
+  const file = await pickImageFile()
+  if (!file)
+    return
+  try {
+    const { src, aspectRatio } = await readImage(file)
+    const element = createImage(
+      { centerXMm: doc.page.widthMm / 2, centerYMm: doc.page.heightMm / 2 },
+      src,
+      aspectRatio,
+      Math.min(80, doc.page.widthMm * 0.6),
+    )
+    history.dispatch(addElementCommand(doc, element))
+    selection.select(element.id)
+  }
+  catch (error) {
+    imageError.value = error instanceof ImageTooLargeError
+      ? t('palette.imageTooLarge')
+      : t('palette.imageInvalid')
+  }
+}
+
 const TILES = [
   { key: 'rect', labelKey: 'palette.rect', create: createRect },
   { key: 'line', labelKey: 'palette.line', create: createLine },
   { key: 'circle', labelKey: 'palette.circle', create: createCircle },
   { key: 'text', labelKey: 'palette.text', create: createText },
+  { key: 'qr', labelKey: 'palette.qr', create: createQr },
+  { key: 'barcode', labelKey: 'palette.barcode', create: createBarcode },
 ] as const
 
 function addElement(create: (place: { centerXMm: number, centerYMm: number }) => TemplateElement): void {
@@ -80,19 +109,102 @@ function addElement(create: (place: { centerXMm: number, centerYMm: number }) =>
             fill="currentColor"
             stroke="none"
           >Aa</text>
+          <g
+            v-else-if="tile.key === 'qr'"
+            fill="currentColor"
+            stroke="none"
+          >
+            <rect
+              x="6"
+              y="6"
+              width="8"
+              height="8"
+            />
+            <rect
+              x="18"
+              y="6"
+              width="8"
+              height="8"
+            />
+            <rect
+              x="6"
+              y="18"
+              width="8"
+              height="8"
+            />
+            <rect
+              x="18"
+              y="18"
+              width="3"
+              height="3"
+            />
+            <rect
+              x="23"
+              y="21"
+              width="3"
+              height="3"
+            />
+            <rect
+              x="18"
+              y="23"
+              width="3"
+              height="3"
+            />
+          </g>
+          <g
+            v-else-if="tile.key === 'barcode'"
+            fill="currentColor"
+            stroke="none"
+          >
+            <rect
+              x="6"
+              y="8"
+              width="2"
+              height="16"
+            />
+            <rect
+              x="10"
+              y="8"
+              width="1"
+              height="16"
+            />
+            <rect
+              x="13"
+              y="8"
+              width="3"
+              height="16"
+            />
+            <rect
+              x="18"
+              y="8"
+              width="1"
+              height="16"
+            />
+            <rect
+              x="21"
+              y="8"
+              width="2"
+              height="16"
+            />
+            <rect
+              x="25"
+              y="8"
+              width="1"
+              height="16"
+            />
+          </g>
         </svg>
         {{ t(tile.labelKey) }}
       </button>
 
-      <!-- image: reserved, arrives in a later round -->
       <button
         type="button"
-        disabled
-        class="pp:flex pp:flex-col pp:items-center pp:gap-2 pp:rounded-xl pp:border pp:border-dashed pp:border-slate-200 pp:bg-slate-50 pp:p-3 pp:text-xs pp:font-medium pp:text-slate-400"
+        class="pp:flex pp:flex-col pp:items-center pp:gap-2 pp:rounded-xl pp:border pp:border-slate-200 pp:bg-white pp:p-3 pp:text-xs pp:font-medium pp:text-slate-700 pp:transition hover:pp:border-brand-500 hover:pp:bg-brand-50 hover:pp:text-brand-700"
         data-pp-palette-tile="image"
+        @click="addImage"
       >
         <svg
-          class="pp:h-8 pp:w-8"
+          class="pp:h-8 pp:w-8 pp:text-slate-500"
           viewBox="0 0 32 32"
           fill="none"
           stroke="currentColor"
@@ -112,8 +224,16 @@ function addElement(create: (place: { centerXMm: number, centerYMm: number }) =>
           />
           <path d="m7 22 6-6 4 4 5-5 3 3" />
         </svg>
-        {{ t('palette.image') }} · {{ t('palette.soon') }}
+        {{ t('palette.image') }}
       </button>
     </div>
+
+    <p
+      v-if="imageError"
+      class="pp:rounded-lg pp:bg-rose-50 pp:p-2 pp:text-[11px] pp:text-rose-600"
+      data-pp-image-error
+    >
+      {{ imageError }}
+    </p>
   </div>
 </template>

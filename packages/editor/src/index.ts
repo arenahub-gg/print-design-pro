@@ -11,19 +11,25 @@ export { CSS_DPI, MM_PER_INCH, mmToPx, pxToMm, roundMm } from './core/units'
 
 // Schema + types
 export {
+  BARCODE_FORMATS,
+  barcodeElementSchema,
   circleElementSchema,
   elementSchema,
   imageElementSchema,
   lineElementSchema,
+  qrElementSchema,
   rectElementSchema,
   textElementSchema,
 } from './core/schema/elements'
 export type {
+  BarcodeElement,
+  BarcodeFormat,
   CircleElement,
   ElementPatch,
   ElementType,
   ImageElement,
   LineElement,
+  QrElement,
   RectElement,
   TemplateElement,
   TextElement,
@@ -54,7 +60,7 @@ export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'
 // Shell (primary public component)
 export { default as PrintDesigner } from './components/shell/PrintDesigner.vue'
 export type { EditorLocale } from './locales/messages'
-export { createCircle, createLine, createRect, createText } from './core/element-factories'
+export { createBarcode, createCircle, createImage, createLine, createQr, createRect, createText } from './core/element-factories'
 
 // Print render pipeline
 export { renderToCanvas } from './render/render-engine'

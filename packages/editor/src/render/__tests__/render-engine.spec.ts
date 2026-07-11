@@ -1,4 +1,4 @@
-// @vitest-environment happy-dom
+﻿// @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createEmptyTemplate } from '../../core/schema/template'
 import { createRect, createText } from '../../core/element-factories'
@@ -52,38 +52,38 @@ beforeEach(() => {
 })
 
 describe('renderToCanvas', () => {
-  it('sizes the canvas for the page at the requested DPI', () => {
+  it('sizes the canvas for the page at the requested DPI', async () => {
     const doc = createEmptyTemplate('t', PAGE_PRESETS.a4)
-    const canvas = renderToCanvas(doc, { dpi: 300 })
+    const canvas = await renderToCanvas(doc, { dpi: 300 })
     // A4 210x297mm at 300dpi
     expect(canvas.width).toBe(2480)
     expect(canvas.height).toBe(3508)
 
-    const label = renderToCanvas(createEmptyTemplate('l', PAGE_PRESETS.label50x30), { dpi: 300 })
+    const label = await renderToCanvas(createEmptyTemplate('l', PAGE_PRESETS.label50x30), { dpi: 300 })
     expect(label.width).toBe(591)
     expect(label.height).toBe(354)
   })
 
-  it('scales the context once to mm space and paints the background', () => {
+  it('scales the context once to mm space and paints the background', async () => {
     const doc = createEmptyTemplate('t', PAGE_PRESETS.a4)
-    renderToCanvas(doc, { dpi: 300 })
+    await renderToCanvas(doc, { dpi: 300 })
     const scale = mockCtx.calls.find(c => c.method === 'scale')!
     expect(scale.args[0]).toBeCloseTo(300 / 25.4, 6)
     const bg = mockCtx.calls.find(c => c.method === 'fillRect')!
     expect(bg.args).toEqual([0, 0, 210, 297])
   })
 
-  it('skips background when null', () => {
-    renderToCanvas(createEmptyTemplate(), { background: null })
+  it('skips background when null', async () => {
+    await renderToCanvas(createEmptyTemplate(), { background: null })
     expect(mockCtx.calls.some(c => c.method === 'fillRect')).toBe(false)
   })
 
-  it('applies the editor transform sequence for a rotated element', () => {
+  it('applies the editor transform sequence for a rotated element', async () => {
     const doc = createEmptyTemplate()
     const rect = createRect({ centerXMm: 50, centerYMm: 40 })
     rect.rotation = 30
     doc.elements.push(rect)
-    renderToCanvas(doc)
+    await renderToCanvas(doc)
 
     const translates = mockCtx.calls.filter(c => c.method === 'translate')
     const rotate = mockCtx.calls.find(c => c.method === 'rotate')!
@@ -94,14 +94,14 @@ describe('renderToCanvas', () => {
     expect(translates[1]!.args).toEqual([-rect.widthMm / 2, -rect.heightMm / 2])
   })
 
-  it('skips invisible elements and preserves array paint order', () => {
+  it('skips invisible elements and preserves array paint order', async () => {
     const doc = createEmptyTemplate()
     const hidden = createRect({ centerXMm: 20, centerYMm: 20 })
     hidden.visible = false
     const first = createRect({ centerXMm: 30, centerYMm: 30 })
     const second = createRect({ centerXMm: 60, centerYMm: 60 })
     doc.elements.push(hidden, first, second)
-    renderToCanvas(doc)
+    await renderToCanvas(doc)
 
     const rects = mockCtx.calls.filter(c => c.method === 'roundRect')
     expect(rects).toHaveLength(2)
@@ -111,12 +111,12 @@ describe('renderToCanvas', () => {
     expect(translates[2]!.args[0]).toBeCloseTo(60, 6)
   })
 
-  it('renders text with wrapping, clipping, and pt->mm font size', () => {
+  it('renders text with wrapping, clipping, and pt->mm font size', async () => {
     const doc = createEmptyTemplate()
     const text = createText({ centerXMm: 105, centerYMm: 30 }, 'hello world wrap me')
     text.widthMm = 20 // narrow: forces wrapping at 2mm/char model
     doc.elements.push(text)
-    renderToCanvas(doc)
+    await renderToCanvas(doc)
 
     expect(mockCtx.calls.some(c => c.method === 'clip')).toBe(true)
     const fillTexts = mockCtx.calls.filter(c => c.method === 'fillText')

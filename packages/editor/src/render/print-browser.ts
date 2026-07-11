@@ -12,7 +12,7 @@ const CLEANUP_FALLBACK_MS = 10 * 60_000
 const LOAD_TIMEOUT_MS = 10_000
 
 export async function printDocument(doc: TemplateDocument, options: RenderOptions = {}): Promise<void> {
-  const canvas = renderToCanvas(doc, options)
+  const canvas = await renderToCanvas(doc, options)
   const dataUrl = canvas.toDataURL('image/png')
 
   const iframe = document.createElement('iframe')

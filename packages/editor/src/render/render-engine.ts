@@ -8,6 +8,9 @@ import type {
 } from '../core/schema/elements'
 import type { TemplateDocument } from '../core/schema/template'
 import { MM_PER_INCH } from '../core/units'
+import { paintBarcode } from './element-painters/paint-barcode'
+import { paintImage, type ImageCache } from './element-painters/paint-image'
+import { paintQr } from './element-painters/paint-qr'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT, wrapText } from './text-layout'
 
 // Schema -> Canvas2D print renderer. THE single source of print output: PNG
@@ -29,7 +32,9 @@ export interface RenderOptions {
 /** Chromium's per-dimension canvas limit; beyond it rasterization fails silently. */
 const MAX_CANVAS_PX = 16384
 
-export function renderToCanvas(doc: TemplateDocument, options: RenderOptions = {}): HTMLCanvasElement {
+// Async: raster-producing elements (image now; QR/barcode next) load or
+// generate their bitmaps during the render pass.
+export async function renderToCanvas(doc: TemplateDocument, options: RenderOptions = {}): Promise<HTMLCanvasElement> {
   const dpi = options.dpi ?? 300
   const background = options.background === undefined ? '#ffffff' : options.background
   const pxPerMm = dpi / MM_PER_INCH
@@ -57,17 +62,25 @@ export function renderToCanvas(doc: TemplateDocument, options: RenderOptions = {
     ctx.fillRect(0, 0, doc.page.widthMm, doc.page.heightMm)
   }
 
+  // Per-render bitmap cache: each unique image src loads once.
+  const imageCache: ImageCache = new Map()
+
   // Array order = paint order (identical to ElementLayer's v-for).
   for (const element of doc.elements) {
     if (!element.visible)
       continue
-    drawElement(ctx, element)
+    await drawElement(ctx, element, imageCache, pxPerMm)
   }
 
   return canvas
 }
 
-function drawElement(ctx: CanvasRenderingContext2D, element: TemplateElement): void {
+async function drawElement(
+  ctx: CanvasRenderingContext2D,
+  element: TemplateElement,
+  imageCache: ImageCache,
+  pxPerMm: number,
+): Promise<void> {
   ctx.save()
   // Same transform as ElementRenderer: rotate around the center, then draw
   // the local box with its top-left at (-w/2, -h/2).
@@ -75,6 +88,22 @@ function drawElement(ctx: CanvasRenderingContext2D, element: TemplateElement): v
   ctx.rotate(degToRad(element.rotation))
   ctx.translate(-element.widthMm / 2, -element.heightMm / 2)
 
+  try {
+    await paintByType(ctx, element, imageCache, pxPerMm)
+  }
+  finally {
+    // Restore even if a painter throws - transform/clip state must never
+    // bleed into the next element.
+    ctx.restore()
+  }
+}
+
+async function paintByType(
+  ctx: CanvasRenderingContext2D,
+  element: TemplateElement,
+  imageCache: ImageCache,
+  pxPerMm: number,
+): Promise<void> {
   switch (element.type) {
     case 'rect':
       drawRect(ctx, element)
@@ -89,10 +118,15 @@ function drawElement(ctx: CanvasRenderingContext2D, element: TemplateElement): v
       drawText(ctx, element)
       break
     case 'image':
-      // Schema stub - no renderer until the image round.
+      await paintImage(ctx, element, imageCache)
+      break
+    case 'qr':
+      await paintQr(ctx, element, pxPerMm)
+      break
+    case 'barcode':
+      await paintBarcode(ctx, element, pxPerMm)
       break
   }
-  ctx.restore()
 }
 
 /** Stroke inset by half its width - matches the SVG renderer's geometry. */

@@ -1,4 +1,12 @@
-import type { CircleElement, LineElement, RectElement, TextElement } from './schema/elements'
+import type {
+  BarcodeElement,
+  CircleElement,
+  ImageElement,
+  LineElement,
+  QrElement,
+  RectElement,
+  TextElement,
+} from './schema/elements'
 import { newId } from './schema/template'
 import { roundMm } from './units'
 
@@ -53,6 +61,50 @@ export function createCircle(place: PlaceAt): CircleElement {
     fillColor: '#fee2e2',
     strokeColor: '#7f1d1d',
     strokeWidthMm: 0.4,
+  }
+}
+
+/**
+ * Image element sized from the bitmap's aspect ratio, capped at `maxWidthMm`.
+ * `src` is a data URL (self-contained documents, local-first).
+ */
+export function createImage(
+  place: PlaceAt,
+  src: string,
+  aspectRatio: number,
+  maxWidthMm = 80,
+): ImageElement {
+  const widthMm = maxWidthMm
+  const heightMm = roundMm(widthMm / (aspectRatio || 1))
+  return {
+    ...base(place, widthMm, heightMm),
+    type: 'image',
+    name: 'Image',
+    src,
+  }
+}
+
+export function createQr(place: PlaceAt, content = 'https://example.com'): QrElement {
+  return {
+    ...base(place, 30, 30),
+    type: 'qr',
+    name: 'QR code',
+    content,
+    ecLevel: 'M',
+    color: '#000000',
+    backgroundColor: '#ffffff',
+  }
+}
+
+export function createBarcode(place: PlaceAt, content = '123456789012'): BarcodeElement {
+  return {
+    ...base(place, 60, 20),
+    type: 'barcode',
+    name: 'Barcode',
+    content,
+    format: 'CODE128',
+    showText: true,
+    lineColor: '#000000',
   }
 }
 

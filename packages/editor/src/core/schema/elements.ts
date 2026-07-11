@@ -46,11 +46,30 @@ export const textElementSchema = baseElementSchema.extend({
   color: z.string(),
 })
 
-// Typed stub - no UI until a later round, but the schema slot is reserved so
-// documents containing images stay forward-compatible.
 export const imageElementSchema = baseElementSchema.extend({
   type: z.literal('image'),
+  /** Data URL - documents stay self-contained (local-first). */
   src: z.string(),
+})
+
+export const qrElementSchema = baseElementSchema.extend({
+  type: z.literal('qr'),
+  content: z.string(),
+  /** Error-correction level - higher survives more print damage. */
+  ecLevel: z.enum(['L', 'M', 'Q', 'H']),
+  color: z.string(),
+  backgroundColor: z.string(),
+})
+
+export const BARCODE_FORMATS = ['CODE128', 'EAN13', 'EAN8', 'CODE39', 'ITF14', 'UPC'] as const
+
+export const barcodeElementSchema = baseElementSchema.extend({
+  type: z.literal('barcode'),
+  content: z.string(),
+  format: z.enum(BARCODE_FORMATS),
+  /** Render the human-readable value under the bars. */
+  showText: z.boolean(),
+  lineColor: z.string(),
 })
 
 export const elementSchema = z.discriminatedUnion('type', [
@@ -59,6 +78,8 @@ export const elementSchema = z.discriminatedUnion('type', [
   circleElementSchema,
   textElementSchema,
   imageElementSchema,
+  qrElementSchema,
+  barcodeElementSchema,
 ])
 
 export type RectElement = z.infer<typeof rectElementSchema>
@@ -66,6 +87,9 @@ export type LineElement = z.infer<typeof lineElementSchema>
 export type CircleElement = z.infer<typeof circleElementSchema>
 export type TextElement = z.infer<typeof textElementSchema>
 export type ImageElement = z.infer<typeof imageElementSchema>
+export type QrElement = z.infer<typeof qrElementSchema>
+export type BarcodeElement = z.infer<typeof barcodeElementSchema>
+export type BarcodeFormat = (typeof BARCODE_FORMATS)[number]
 export type TemplateElement = z.infer<typeof elementSchema>
 export type ElementType = TemplateElement['type']
 

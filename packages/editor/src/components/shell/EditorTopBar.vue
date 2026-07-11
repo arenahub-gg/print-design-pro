@@ -8,7 +8,7 @@ import { useViewportStore } from '../../stores/viewport-store'
 
 // Top bar: inline-editable document name, undo/redo, zoom, grid toggle.
 // The host app injects its own actions (save/export/import) via #actions.
-const emit = defineEmits<{ fit: [] }>()
+const emit = defineEmits<{ fit: [], preview: [], print: [] }>()
 
 const doc = useDocumentStore()
 const history = useHistoryStore()
@@ -118,6 +118,22 @@ function commitRename(): void {
     </label>
 
     <div class="pp:ml-auto pp:flex pp:items-center pp:gap-2">
+      <button
+        type="button"
+        class="pp:rounded-lg pp:border pp:border-slate-200 pp:px-3 pp:py-1.5 pp:text-xs pp:text-slate-600 hover:pp:bg-slate-50"
+        data-pp-preview-button
+        @click="emit('preview')"
+      >
+        {{ t('topbar.preview') }}
+      </button>
+      <button
+        type="button"
+        class="pp:rounded-lg pp:bg-brand-500 pp:px-3 pp:py-1.5 pp:text-xs pp:font-medium pp:text-white hover:pp:bg-brand-600"
+        data-pp-print-button
+        @click="emit('print')"
+      >
+        {{ t('topbar.print') }}
+      </button>
       <slot name="actions" />
     </div>
   </header>

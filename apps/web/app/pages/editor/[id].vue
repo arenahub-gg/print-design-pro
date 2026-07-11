@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TemplateDocument } from '@pro-print/editor'
-import { exportTemplate, importTemplate, PrintDesigner } from '@pro-print/editor'
+import { exportPdf, exportPng, exportTemplate, importTemplate, PrintDesigner } from '@pro-print/editor'
 import '@pro-print/editor/style.css'
 
 // Editor host page: loads from IndexedDB, autosaves debounced snapshots the
@@ -78,16 +78,53 @@ onBeforeUnmount(() => {
   flushPending()
 })
 
-function exportJson(): void {
-  if (!template.value)
-    return
-  const blob = new Blob([exportTemplate(template.value)], { type: 'application/json' })
+function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `${template.value.name || 'template'}.json`
+  link.download = filename
+  document.body.appendChild(link)
   link.click()
-  URL.revokeObjectURL(url)
+  link.remove()
+  // Deferred revoke: synchronous revoke races the download in some engines.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function baseFilename(): string {
+  return template.value?.name.trim() || 'template'
+}
+
+function exportJson(): void {
+  if (!template.value)
+    return
+  downloadBlob(
+    new Blob([exportTemplate(template.value)], { type: 'application/json' }),
+    `${baseFilename()}.json`,
+  )
+}
+
+const exporting = ref(false)
+
+async function exportFile(kind: 'png' | 'pdf'): Promise<void> {
+  if (!template.value || exporting.value)
+    return
+  exporting.value = true
+  try {
+    const blob = kind === 'png'
+      ? await exportPng(template.value)
+      : await exportPdf(template.value)
+    downloadBlob(blob, `${baseFilename()}.${kind}`)
+  }
+  catch (error) {
+    toast.add({
+      title: `Export ${kind.toUpperCase()} failed`,
+      description: error instanceof Error ? error.message.slice(0, 200) : 'Unknown error',
+      color: 'error',
+    })
+  }
+  finally {
+    exporting.value = false
+  }
 }
 
 async function importJson(event: Event): Promise<void> {
@@ -156,14 +193,23 @@ async function importJson(event: Event): Promise<void> {
           >
             Templates
           </UButton>
-          <UButton
-            size="sm"
-            variant="soft"
-            icon="i-lucide-download"
-            @click="exportJson"
+          <UDropdownMenu
+            :items="[
+              { label: 'PNG (300 DPI)', icon: 'i-lucide-image', onSelect: () => exportFile('png') },
+              { label: 'PDF', icon: 'i-lucide-file-text', onSelect: () => exportFile('pdf') },
+              { label: 'JSON (template)', icon: 'i-lucide-braces', onSelect: () => exportJson() },
+            ]"
           >
-            Export
-          </UButton>
+            <UButton
+              size="sm"
+              variant="soft"
+              icon="i-lucide-download"
+              :loading="exporting"
+              data-test-export
+            >
+              Export
+            </UButton>
+          </UDropdownMenu>
           <label>
             <UButton
               size="sm"

@@ -20,11 +20,15 @@ export default defineConfig({
       cssFileName: 'editor',
     },
     rollupOptions: {
-      external: ['vue', 'pinia'],
+      // pdf-lib is externalized so the dynamic import in export-pdf.ts stays
+      // a real lazy boundary for consumers (multi-format lib builds would
+      // otherwise inline it eagerly into editor.js).
+      external: ['vue', 'pinia', 'pdf-lib'],
       output: {
         globals: {
-          vue: 'Vue',
-          pinia: 'Pinia',
+          'vue': 'Vue',
+          'pinia': 'Pinia',
+          'pdf-lib': 'PDFLib',
         },
       },
     },

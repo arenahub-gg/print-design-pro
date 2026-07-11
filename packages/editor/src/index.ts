@@ -56,6 +56,15 @@ export { default as PrintDesigner } from './components/shell/PrintDesigner.vue'
 export type { EditorLocale } from './locales/messages'
 export { createCircle, createLine, createRect, createText } from './core/element-factories'
 
+// Print render pipeline
+export { renderToCanvas } from './render/render-engine'
+export type { RenderOptions } from './render/render-engine'
+export { TEXT_LINE_HEIGHT, wrapText } from './render/text-layout'
+export type { TextMeasurer } from './render/text-layout'
+export { exportPng } from './render/export-image'
+export { exportPdf } from './render/export-pdf'
+export { printDocument } from './render/print-browser'
+
 // Canvas
 export { default as CanvasViewport } from './components/canvas/CanvasViewport.vue'
 export { useCanvasGestures } from './composables/use-canvas-gestures'

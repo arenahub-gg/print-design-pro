@@ -8,9 +8,11 @@ import type { EditorLocale } from '../../locales/messages'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
 import { useSelectionStore } from '../../stores/selection-store'
+import { printDocument } from '../../render/print-browser'
 import CanvasViewport from '../canvas/CanvasViewport.vue'
 import EditorTopBar from './EditorTopBar.vue'
 import ElementPalette from './ElementPalette.vue'
+import PrintPreviewDialog from './PrintPreviewDialog.vue'
 import PropertiesPanel from './PropertiesPanel.vue'
 
 // Public root component. v-model contract: the host passes a document in;
@@ -32,6 +34,24 @@ const selection = useSelectionStore()
 provideEditorI18n(toRef(props, 'locale'))
 
 const viewportRef = ref<InstanceType<typeof CanvasViewport> | null>(null)
+const previewOpen = ref(false)
+const printing = ref(false)
+
+async function printNow(): Promise<void> {
+  if (printing.value)
+    return
+  printing.value = true
+  try {
+    await printDocument(cloneJson(doc.document))
+  }
+  catch (error) {
+    // The library has no toast system - surface for the host's console.
+    console.error('[pro-print] print failed:', error)
+  }
+  finally {
+    printing.value = false
+  }
+}
 
 /** The exact object we last emitted - lets the watch tell a v-model echo apart from a real replacement (e.g. JSON import with the same id). */
 let lastEmittedSnapshot: TemplateDocument | null = null
@@ -82,11 +102,20 @@ onBeforeUnmount(() => {
     class="pp:grid pp:h-full pp:min-h-0 pp:grid-rows-[3.5rem_1fr] pp:bg-surface-canvas pp:text-slate-800"
     data-pp-designer
   >
-    <EditorTopBar @fit="viewportRef?.fit()">
+    <EditorTopBar
+      @fit="viewportRef?.fit()"
+      @preview="previewOpen = true"
+      @print="printNow"
+    >
       <template #actions>
         <slot name="actions" />
       </template>
     </EditorTopBar>
+
+    <PrintPreviewDialog
+      :open="previewOpen"
+      @close="previewOpen = false"
+    />
 
     <div class="pp:grid pp:min-h-0 pp:grid-cols-[13rem_1fr_17rem] max-lg:pp:grid-cols-[10rem_1fr_14rem]">
       <aside class="pp:min-h-0 pp:border-r pp:border-slate-200">

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { TemplateElement } from '../../core/schema/elements'
 import { mmToPx } from '../../core/units'
+import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
 
 // Render decision (validated): each element is an absolutely-positioned div
@@ -98,9 +99,10 @@ function ptToPx(pt: number): number {
       :style="{
         fontSize: `${ptToPx(element.fontSizePt)}px`,
         fontWeight: element.fontWeight,
+        fontFamily: TEXT_FONT_STACK,
         textAlign: element.align,
         color: element.color,
-        lineHeight: 1.25,
+        lineHeight: TEXT_LINE_HEIGHT,
       }"
     >{{ element.content }}</div>
     <!-- eslint-enable vue/multiline-html-element-content-newline -->

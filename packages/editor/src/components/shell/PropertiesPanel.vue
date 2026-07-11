@@ -20,6 +20,7 @@ import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
 import { useInteractionStore } from '../../stores/interaction-store'
 import { useSelectionStore } from '../../stores/selection-store'
+import ColorField from './panel-controls/ColorField.vue'
 import NumberField from './panel-controls/NumberField.vue'
 
 // Right contextual panel. Every edit commits through a command so it is
@@ -158,6 +159,59 @@ function deleteSelected(): void {
   selection.clear()
 }
 
+// Color rows for the single selection - one entry per color prop the
+// element type carries. `transparent` is offered only where the renderers
+// treat it as "paint nothing" (fills/backgrounds); QR stays hex-only
+// because the qrcode lib requires hex colors.
+interface ColorProp {
+  key: string
+  labelKey: `color.${string}`
+  value: string
+  allowTransparent?: boolean
+}
+
+const colorProps = computed<ColorProp[]>(() => {
+  const el = single.value
+  if (!el)
+    return []
+  switch (el.type) {
+    case 'rect':
+    case 'circle':
+      return [
+        { key: 'fillColor', labelKey: 'color.fill', value: el.fillColor, allowTransparent: true },
+        { key: 'strokeColor', labelKey: 'color.stroke', value: el.strokeColor },
+      ]
+    case 'line':
+      return [{ key: 'strokeColor', labelKey: 'color.stroke', value: el.strokeColor }]
+    case 'text':
+      return [{ key: 'color', labelKey: 'color.text', value: el.color }]
+    case 'qr':
+      return [
+        { key: 'color', labelKey: 'color.foreground', value: el.color },
+        { key: 'backgroundColor', labelKey: 'color.background', value: el.backgroundColor },
+      ]
+    case 'barcode':
+      return [{ key: 'lineColor', labelKey: 'color.bars', value: el.lineColor }]
+    case 'table':
+      return [
+        { key: 'borderColor', labelKey: 'color.border', value: el.borderColor },
+        { key: 'headerBackground', labelKey: 'color.headerBg', value: el.headerBackground },
+      ]
+    default:
+      return []
+  }
+})
+
+function commitColor(key: string, value: string): void {
+  if (!single.value || single.value.locked)
+    return
+  history.dispatch(updateElementsCommand(
+    doc,
+    [{ id: single.value.id, patch: { [key]: value } as ElementPatch }],
+    'Change color',
+  ))
+}
+
 function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 'fontWeight' | 'align'>>, label: string): void {
   // Locked elements are read-only everywhere, text props included.
   if (!singleText.value || singleText.value.locked)
@@ -247,6 +301,25 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           >
           {{ t('panel.locked') }}
         </label>
+      </section>
+
+      <section
+        v-if="colorProps.length"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-color-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
+          {{ t('panel.colors') }}
+        </h3>
+        <ColorField
+          v-for="prop in colorProps"
+          :key="prop.key"
+          :label="t(prop.labelKey as never)"
+          :model-value="prop.value"
+          :allow-transparent="prop.allowTransparent"
+          :disabled="allLocked"
+          @commit="commitColor(prop.key, $event)"
+        />
       </section>
 
       <section

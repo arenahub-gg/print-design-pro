@@ -146,7 +146,10 @@ system-ui — print-engine parity pinned in round 2), accent #2A6FDB (dark
 Editor layout: 52px topbar (logo→home, rename + autosave dot, centered
 element tool strip, undo/redo, zoom cluster, theme toggle, "Xuất / In" CTA) /
 248px paper-preset panel ("Biến dữ liệu" tab disabled = future data binding) /
-264px layers + properties / 28px status bar (localized preset select, undoable
+264px layers + properties (incl. a "Màu sắc" section: ColorField swatch
+palette + native custom picker per color prop of the selected element type;
+`transparent` offered only for fills — QR stays hex-only for the qrcode lib) /
+28px status bar (localized preset select, undoable
 page-size switch; preset match compares FULL settings incl. margins). Export
 modal (ExportDialog.vue, replaces the round-2 preview dialog): PNG/PDF/Print
 cards + live 150dpi render-engine preview with a ticket race guard; downloads

@@ -7,6 +7,7 @@ import { createRect, createText } from '../../core/element-factories'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
 import { useSelectionStore } from '../../stores/selection-store'
+import ColorField from '../shell/panel-controls/ColorField.vue'
 import NumberField from '../shell/panel-controls/NumberField.vue'
 import PropertiesPanel from '../shell/PropertiesPanel.vue'
 
@@ -43,6 +44,42 @@ describe('numberField', () => {
     await input.setValue('-5')
     await input.trigger('keydown.enter')
     expect(wrapper.emitted('commit')).toEqual([[1]])
+  })
+})
+
+describe('colorField', () => {
+  it('commits a swatch pick, skips re-picking the current color', async () => {
+    const wrapper = mount(ColorField, {
+      props: { label: 'Fill', modelValue: '#000000' },
+    })
+    await wrapper.find('[data-pp-color-swatch="#2a6fdb"]').trigger('click')
+    expect(wrapper.emitted('commit')).toEqual([['#2a6fdb']])
+
+    await wrapper.find('[data-pp-color-swatch="#000000"]').trigger('click')
+    expect(wrapper.emitted('commit')).toHaveLength(1)
+  })
+
+  it('offers transparent only when allowed and commits it', async () => {
+    const plain = mount(ColorField, {
+      props: { label: 'Stroke', modelValue: '#000000' },
+    })
+    expect(plain.find('[data-pp-color-none]').exists()).toBe(false)
+
+    const withNone = mount(ColorField, {
+      props: { label: 'Fill', modelValue: '#000000', allowTransparent: true },
+    })
+    await withNone.find('[data-pp-color-none]').trigger('click')
+    expect(withNone.emitted('commit')).toEqual([['transparent']])
+  })
+
+  it('commits a custom color from the native picker', async () => {
+    const wrapper = mount(ColorField, {
+      props: { label: 'Fill', modelValue: '#000000' },
+    })
+    const input = wrapper.find('[data-pp-color-custom]')
+    // setValue fires input+change itself for form elements
+    await input.setValue('#123456')
+    expect(wrapper.emitted('commit')).toEqual([['#123456']])
   })
 })
 
@@ -85,6 +122,22 @@ describe('propertiesPanel', () => {
     expect(doc.getElementById(rect.id)?.xMm).toBe(99)
     history.undo()
     expect(doc.getElementById(rect.id)?.xMm).toBe(rect.xMm)
+  })
+
+  it('color pick dispatches an undoable command for the rect fill', async () => {
+    const { doc, history, selection, wrapper } = setup()
+    const rect = createRect({ centerXMm: 50, centerYMm: 50 })
+    history.dispatch(addElementCommand(doc, rect))
+    selection.select(rect.id)
+    await wrapper.vm.$nextTick()
+
+    const section = wrapper.find('[data-pp-color-section]')
+    expect(section.exists()).toBe(true)
+    await section.find('[data-pp-color-swatch="#16a34a"]').trigger('click')
+    expect((doc.getElementById(rect.id) as { fillColor?: string }).fillColor).toBe('#16a34a')
+
+    history.undo()
+    expect((doc.getElementById(rect.id) as { fillColor?: string }).fillColor).toBe(rect.fillColor)
   })
 
   it('text section edits content for a text element and respects lock', async () => {

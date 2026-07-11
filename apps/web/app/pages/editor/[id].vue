@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TemplateDocument } from '@pro-print/editor'
-import { exportPdf, exportPng, exportTemplate, importTemplate, PrintDesigner } from '@pro-print/editor'
+import { downloadBlob, exportPdf, exportPng, exportTemplate, importTemplate, PrintDesigner } from '@pro-print/editor'
 import '@pro-print/editor/style.css'
 
 // Editor host page: loads from IndexedDB, autosaves debounced snapshots the
@@ -77,18 +77,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('pagehide', flushPending)
   flushPending()
 })
-
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  // Deferred revoke: synchronous revoke races the download in some engines.
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
 
 function baseFilename(): string {
   return template.value?.name.trim() || 'template'
@@ -175,24 +163,13 @@ async function importJson(event: Event): Promise<void> {
       <PrintDesigner
         v-if="template"
         :model-value="template"
-        locale="en"
+        :saving="saving"
+        locale="vi"
         class="h-full"
         @update:model-value="onDocumentUpdate"
+        @home="navigateTo('/templates')"
       >
         <template #actions>
-          <span
-            v-if="saving"
-            class="text-xs text-slate-400"
-          >Saving…</span>
-          <UButton
-            to="/templates"
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            icon="i-lucide-arrow-left"
-          >
-            Templates
-          </UButton>
           <UDropdownMenu
             :items="[
               { label: 'PNG (300 DPI)', icon: 'i-lucide-image', onSelect: () => exportFile('png') },

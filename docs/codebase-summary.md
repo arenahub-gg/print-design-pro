@@ -1,6 +1,6 @@
 # Codebase Summary
 
-Round-1 state (2026-07-11). Monorepo map + data flow for contributors.
+Round-5 state (2026-07-11). Monorepo map + data flow for contributors.
 
 ## Layout
 
@@ -22,15 +22,19 @@ pro-print-designer/          pnpm workspace (pnpm 11, node >= 20)
 │   ├── src/components/
 │   │   ├── canvas/          CanvasViewport/Stage/Page, rulers, grid, guides,
 │   │   │                    element renderers, selection/marquee/snap overlays
-│   │   └── shell/           PrintDesigner (public root), topbar, palette,
-│   │                        properties panel, panel-controls
+│   │   └── shell/           PrintDesigner (public root), EditorTopBar (52px:
+│   │                        tool strip, zoom, theme toggle, export CTA),
+│   │                        PaperPresetPanel, LayersPanel, PropertiesPanel,
+│   │                        StatusBar, ExportDialog, panel-controls
 │   ├── src/composables/     pointer-drag lifecycle, gestures, interactions,
-│   │                        keyboard map, editor i18n (en/vi)
+│   │                        keyboard map, editor i18n (en/vi), editor theme
 │   ├── src/styles/index.css Tailwind 4, `pp` prefix, @theme static tokens, @source "../"
 │   └── playground/          bare Vue 3 bench (`pnpm --filter @pro-print/editor play`)
 └── apps/web/                Nuxt 4 + Nuxt UI 4 app
-    ├── app/pages/           landing, /templates (CRUD grid), /editor/[id] (ssr: false)
-    ├── app/composables/     use-template-repository (IndexedDB via idb)
+    ├── app/layouts/         default: 220px sidebar (nav + theme toggle)
+    ├── app/pages/           home (quick sizes + recents), /templates (CRUD grid),
+    │                        /settings (theme), /editor/[id] (ssr: false)
+    ├── app/composables/     use-template-repository (IndexedDB via idb), use-app-theme
     └── e2e/                 Playwright acceptance smoke
 ```
 
@@ -117,6 +121,36 @@ identity checks in PrintDesigner compare `toRaw(next)` against the raw
 emitted object. Without it, every 400ms emit re-opened the document,
 silently clearing selection and undo history (regression-tested in E2E).
 `open()` also clears any pending emit timer (phantom-save guard).
+
+## UI design system (round 5 — PrintDesignPro)
+
+Chrome implements the PrintDesignPro design (claude.ai/design project
+e81d4bc8): IBM Plex Sans/Mono for CHROME type (document rendering fonts stay
+system-ui — print-engine parity pinned in round 2), accent #2A6FDB (dark
+#4a8af0), full light/dark token sets. Theming:
+
+- Tokens live in `packages/editor/src/styles/index.css` `@theme static`
+  (`--color-app-bg/panel/inset/border/text*/ok`, `--color-brand-*`); the dark
+  block overrides the **`--pp-*`-prefixed emitted names** under
+  `[data-theme="dark"]` — Tailwind's `prefix(pp)` prefixes emitted variables,
+  not just classes. Variants go AFTER the prefix (`pp:hover:x`;
+  `hover:pp:x` is silently dropped).
+- Theme state: `use-editor-theme` (lib) and `use-app-theme` (app) both stamp
+  `data-theme` + a `.dark` class bridge (Nuxt UI) on `<html>`, persist to
+  localStorage `pp-theme`, and re-sync from the DOM on every call so lib and
+  app toggles stay coherent. A pre-paint head script in nuxt.config prevents
+  theme flash.
+- Canvas rulers read token values via `getComputedStyle` at draw time and
+  redraw on a `data-theme` MutationObserver (canvas can't use CSS vars).
+
+Editor layout: 52px topbar (logo→home, rename + autosave dot, centered
+element tool strip, undo/redo, zoom cluster, theme toggle, "Xuất / In" CTA) /
+248px paper-preset panel ("Biến dữ liệu" tab disabled = future data binding) /
+264px layers + properties / 28px status bar (localized preset select, undoable
+page-size switch; preset match compares FULL settings incl. margins). Export
+modal (ExportDialog.vue, replaces the round-2 preview dialog): PNG/PDF/Print
+cards + live 150dpi render-engine preview with a ticket race guard; downloads
+via the lib `downloadBlob` (exported; the app imports it for JSON export too).
 
 ## Known limitations / backlog
 

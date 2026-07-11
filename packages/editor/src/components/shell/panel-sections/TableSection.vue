@@ -99,11 +99,11 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
     class="pp:flex pp:flex-col pp:gap-2"
     data-pp-table-section
   >
-    <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+    <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
       {{ t('panel.table') }}
     </h3>
 
-    <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+    <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
       <input
         type="checkbox"
         :checked="element.showHeader"
@@ -124,7 +124,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
     />
 
     <!-- columns -->
-    <h4 class="pp:text-[10px] pp:font-semibold pp:uppercase pp:text-slate-400">
+    <h4 class="pp:text-[10px] pp:font-semibold pp:uppercase pp:text-app-text3">
       {{ t('panel.columns') }}
     </h4>
     <div
@@ -136,7 +136,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
         :value="column.title"
         :disabled="locked"
         type="text"
-        class="pp:min-w-0 pp:flex-1 pp:rounded-lg pp:border pp:border-slate-200 pp:px-2 pp:py-1 pp:text-xs"
+        class="pp:min-w-0 pp:flex-1 pp:rounded-lg pp:border pp:border-app-border2 pp:px-2 pp:py-1 pp:text-xs"
         :data-pp-column-title="index"
         @change="renameColumn(index, ($event.target as HTMLInputElement).value)"
       >
@@ -145,13 +145,13 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
         :disabled="locked"
         type="number"
         min="1"
-        class="pp:w-14 pp:rounded-lg pp:border pp:border-slate-200 pp:px-1.5 pp:py-1 pp:text-xs"
+        class="pp:w-14 pp:rounded-lg pp:border pp:border-app-border2 pp:px-1.5 pp:py-1 pp:text-xs"
         :title="t('panel.columnWeight')"
         @change="reweighColumn(index, Number.parseFloat(($event.target as HTMLInputElement).value) || 1)"
       >
       <button
         type="button"
-        class="pp:rounded pp:px-1.5 pp:py-1 pp:text-xs pp:text-slate-400 hover:pp:bg-rose-50 hover:pp:text-rose-600 disabled:pp:opacity-30"
+        class="pp:rounded pp:px-1.5 pp:py-1 pp:text-xs pp:text-app-text3 pp:hover:bg-rose-50 pp:hover:text-rose-600 pp:disabled:opacity-30"
         :disabled="locked || element.columns.length <= 1"
         :data-pp-remove-column="index"
         @click="removeColumn(index)"
@@ -161,7 +161,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
     </div>
     <button
       type="button"
-      class="pp:rounded-lg pp:border pp:border-dashed pp:border-slate-300 pp:px-2 pp:py-1 pp:text-xs pp:text-slate-500 hover:pp:border-brand-500 hover:pp:text-brand-600 disabled:pp:opacity-40"
+      class="pp:rounded-lg pp:border pp:border-dashed pp:border-app-border2 pp:px-2 pp:py-1 pp:text-xs pp:text-app-text2 pp:hover:border-brand-500 pp:hover:text-brand-600 pp:disabled:opacity-40"
       :disabled="locked"
       data-pp-add-column
       @click="addColumn"
@@ -170,7 +170,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
     </button>
 
     <!-- data grid -->
-    <h4 class="pp:text-[10px] pp:font-semibold pp:uppercase pp:text-slate-400">
+    <h4 class="pp:text-[10px] pp:font-semibold pp:uppercase pp:text-app-text3">
       {{ t('panel.rows') }} ({{ element.rows.length }})
     </h4>
     <div class="pp:overflow-x-auto">
@@ -189,7 +189,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
                 :value="row[columnIndex] ?? ''"
                 :disabled="locked"
                 type="text"
-                class="pp:w-20 pp:rounded pp:border pp:border-slate-200 pp:px-1.5 pp:py-1 pp:text-xs"
+                class="pp:w-20 pp:rounded pp:border pp:border-app-border2 pp:px-1.5 pp:py-1 pp:text-xs"
                 :data-pp-cell="`${rowIndex}-${columnIndex}`"
                 @change="editCell(rowIndex, columnIndex, ($event.target as HTMLInputElement).value)"
               >
@@ -201,7 +201,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
     <div class="pp:flex pp:gap-2">
       <button
         type="button"
-        class="pp:flex-1 pp:rounded-lg pp:border pp:border-dashed pp:border-slate-300 pp:px-2 pp:py-1 pp:text-xs pp:text-slate-500 hover:pp:border-brand-500 hover:pp:text-brand-600 disabled:pp:opacity-40"
+        class="pp:flex-1 pp:rounded-lg pp:border pp:border-dashed pp:border-app-border2 pp:px-2 pp:py-1 pp:text-xs pp:text-app-text2 pp:hover:border-brand-500 pp:hover:text-brand-600 pp:disabled:opacity-40"
         :disabled="locked"
         data-pp-add-row
         @click="addRow"
@@ -210,7 +210,7 @@ function editCell(rowIndex: number, columnIndex: number, value: string): void {
       </button>
       <button
         type="button"
-        class="pp:rounded-lg pp:border pp:border-slate-200 pp:px-2 pp:py-1 pp:text-xs pp:text-slate-500 hover:pp:bg-rose-50 hover:pp:text-rose-600 disabled:pp:opacity-40"
+        class="pp:rounded-lg pp:border pp:border-app-border2 pp:px-2 pp:py-1 pp:text-xs pp:text-app-text2 pp:hover:bg-rose-50 pp:hover:text-rose-600 pp:disabled:opacity-40"
         :disabled="locked || element.rows.length === 0"
         data-pp-remove-row
         @click="removeLastRow"

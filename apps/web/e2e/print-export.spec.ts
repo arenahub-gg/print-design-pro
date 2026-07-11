@@ -86,17 +86,21 @@ test('export PDF downloads a parseable single page sized in mm', async ({ page }
   expect(height).toBeCloseTo(841.89, 1)
 })
 
-test('print preview shows the render engine output', async ({ page }) => {
+test('export dialog shows the render engine preview and format cards', async ({ page }) => {
   await createTemplateWithContent(page)
 
-  await page.locator('[data-pp-preview-button]').click()
-  await expect(page.locator('[data-pp-print-preview]')).toBeVisible()
+  await page.locator('[data-pp-export-open]').click()
+  await expect(page.locator('[data-pp-export-dialog]')).toBeVisible()
   const img = page.locator('[data-pp-preview-image]')
   await expect(img).toBeVisible()
   // A4 aspect ratio within tolerance
   const box = await img.boundingBox()
   expect(box!.width / box!.height).toBeCloseTo(210 / 297, 1)
 
-  await page.getByRole('button', { name: 'Close' }).click()
-  await expect(page.locator('[data-pp-print-preview]')).toHaveCount(0)
+  // format cards present and selectable
+  await page.locator('[data-pp-export-format="png"]').click()
+  await expect(page.locator('[data-pp-export-run]')).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-pp-export-dialog]')).toHaveCount(0)
 })

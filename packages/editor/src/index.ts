@@ -1,6 +1,5 @@
-// Public API barrel for @pro-print/editor.
-// Round 1 phase 2: headless core (schema, commands, stores). UI components
-// (PrintDesigner shell, canvas) arrive in phases 3-5.
+// Public API barrel for @pro-print/editor: headless core (schema, commands,
+// stores), render/export pipeline, and the PrintDesigner UI shell.
 import './styles/index.css'
 
 /** Library version, kept in sync with package.json at release time. */
@@ -74,6 +73,7 @@ export type { TextMeasurer } from './render/text-layout'
 export { exportPng } from './render/export-image'
 export { exportPdf } from './render/export-pdf'
 export { printDocument } from './render/print-browser'
+export { downloadBlob } from './render/download'
 
 // Canvas
 export { default as CanvasViewport } from './components/canvas/CanvasViewport.vue'

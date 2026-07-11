@@ -1,8 +1,16 @@
 /*
- * Editor stylesheet entry. Tailwind 4 CSS-first config with a `pp` prefix so
- * compiled utility classes cannot collide with a host app's own Tailwind.
- * Design tokens (Canva-like palette) are defined under @theme and expanded in
- * later phases when shell components arrive.
+ * Editor stylesheet entry - PrintDesignPro design system (round 5).
+ * Tailwind 4 CSS-first config with a `pp` prefix so compiled utility classes
+ * cannot collide with a host app's own Tailwind.
+ *
+ * Theming: light values live in @theme static (authored in Tailwind's
+ * --color-* namespace; the prefix makes them EMIT as --pp-color-*). The dark
+ * block below overrides the EMITTED --pp-* names under a data-theme flip on
+ * <html>, so every utility is theme-agnostic.
+ *
+ * IMPORTANT: --font-ui / --font-uimono style the CHROME only. Document
+ * rendering (canvas elements + print engine) stays on the pinned system-ui
+ * stack in render/text-layout.ts - print parity depends on it.
  */
 @import "tailwindcss" prefix(pp);
 
@@ -10,18 +18,65 @@
  * playground dev server, or a host app) - paths are relative to this file. */
 @source "../";
 
-/* `static` keeps every token in the compiled CSS even when unused, so host
- * apps can override --pp-* variables and later phases can use them from
- * plain CSS (Tailwind 4 otherwise prunes unused theme variables). */
 @theme static {
-  /* Brand accents - warm, friendly (Canva-like direction) */
-  --color-brand-50: #f0f7ff;
-  --color-brand-100: #dceeff;
-  --color-brand-500: #2f7cf6;
-  --color-brand-600: #1f66d8;
+  /* PrintDesignPro palette - light */
+  --color-app-bg: #f4f6f9;
+  --color-app-panel: #ffffff;
+  --color-app-inset: #eef1f5;
+  --color-app-border: #e3e7ee;
+  --color-app-border2: #cfd6e0;
+  --color-app-desk: #e7eaf0;
+  --color-app-text: #18202e;
+  --color-app-text2: #5b6575;
+  --color-app-text3: #96a0b0;
+  --color-app-ok: #1f8a5b;
+  --color-app-ok-soft: #e5f3ec;
+
+  /* Brand accent */
+  --color-brand-500: #2a6fdb;
+  --color-brand-600: #1f5cc0;
+  --color-brand-soft: #e8f0fd;
+  --color-brand-soft2: #d6e5fb;
+  /* Kept for existing utility usages (brand-50/700 mapped into the new ramp) */
+  --color-brand-50: #e8f0fd;
+  --color-brand-100: #d6e5fb;
   --color-brand-700: #1a53b0;
 
-  /* Editor surfaces */
-  --color-surface-canvas: #eef1f5;
-  --color-surface-panel: #ffffff;
+  /* Chrome fonts - host app loads IBM Plex; stacks degrade gracefully */
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-uimono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Legacy aliases still referenced by canvas chrome */
+  --color-surface-canvas: var(--color-app-desk);
+  --color-surface-panel: var(--color-app-panel);
+
+  --shadow-app: 0 1px 3px rgba(16, 24, 40, .08), 0 1px 2px rgba(16, 24, 40, .04);
+  --shadow-app-lg: 0 12px 32px rgba(16, 24, 40, .16);
+}
+
+/* Dark theme: reassign the EMITTED (pp-prefixed) variables - utilities are
+ * untouched. Matches the data-theme attribute either composable stamps. */
+[data-theme="dark"] {
+  --pp-color-app-bg: #13161b;
+  --pp-color-app-panel: #1b2027;
+  --pp-color-app-inset: #232932;
+  --pp-color-app-border: #2a313c;
+  --pp-color-app-border2: #3a4350;
+  --pp-color-app-desk: #0e1116;
+  --pp-color-app-text: #e9edf3;
+  --pp-color-app-text2: #9aa5b4;
+  --pp-color-app-text3: #67717f;
+  --pp-color-app-ok: #3dbd85;
+  --pp-color-app-ok-soft: #12291f;
+
+  --pp-color-brand-500: #4a8af0;
+  --pp-color-brand-600: #6ba0f5;
+  --pp-color-brand-soft: #1d2c45;
+  --pp-color-brand-soft2: #254069;
+  --pp-color-brand-50: #1d2c45;
+  --pp-color-brand-100: #254069;
+  --pp-color-brand-700: #9ec2f7;
+
+  --pp-shadow-app: 0 1px 3px rgba(0, 0, 0, .4);
+  --pp-shadow-app-lg: 0 16px 40px rgba(0, 0, 0, .55);
 }

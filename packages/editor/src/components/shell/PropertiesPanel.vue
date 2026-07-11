@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { ImageTooLargeError, pickImageFile, readImage } from '../../composables/use-image-picker'
-import { updateElementsCommand } from '../../core/commands/element-commands'
+import { cloneJson } from '../../core/clone'
+import { addElementCommand, removeElementsCommand, updateElementsCommand } from '../../core/commands/element-commands'
+import { newId } from '../../core/schema/template'
 import {
   BARCODE_FORMATS,
   type BarcodeElement,
@@ -16,6 +18,7 @@ import TableSection from './panel-sections/TableSection.vue'
 import { roundMm } from '../../core/units'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
+import { useInteractionStore } from '../../stores/interaction-store'
 import { useSelectionStore } from '../../stores/selection-store'
 import NumberField from './panel-controls/NumberField.vue'
 
@@ -24,6 +27,7 @@ import NumberField from './panel-controls/NumberField.vue'
 const doc = useDocumentStore()
 const history = useHistoryStore()
 const selection = useSelectionStore()
+const interaction = useInteractionStore()
 const { t } = useEditorI18n()
 
 const selected = computed(() =>
@@ -120,6 +124,40 @@ async function replaceImage(): Promise<void> {
   }
 }
 
+// Design footer actions: duplicate (offset clone) and delete, both undoable.
+// Guarded against live pointer gestures - mutating mid-drag would leave the
+// gesture committing against stale ids (same rule as the keyboard map).
+function duplicateSelected(): void {
+  if (interaction.hasPreview || interaction.marquee)
+    return
+  const clones = selected.value
+    .filter(el => !el.locked)
+    .map((el) => {
+      const clone = cloneJson(el)
+      clone.id = newId()
+      clone.xMm = roundMm(clone.xMm + 5)
+      clone.yMm = roundMm(clone.yMm + 5)
+      return clone
+    })
+  if (clones.length === 0)
+    return
+  history.transact(clones.length === 1 ? 'Duplicate element' : `Duplicate ${clones.length} elements`, () => {
+    for (const clone of clones)
+      history.dispatch(addElementCommand(doc, clone))
+  })
+  selection.setSelection(clones.map(clone => clone.id))
+}
+
+function deleteSelected(): void {
+  if (interaction.hasPreview || interaction.marquee)
+    return
+  const ids = selected.value.filter(el => !el.locked).map(el => el.id)
+  if (ids.length === 0)
+    return
+  history.dispatch(removeElementsCommand(doc, ids))
+  selection.clear()
+}
+
 function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 'fontWeight' | 'align'>>, label: string): void {
   // Locked elements are read-only everywhere, text props included.
   if (!singleText.value || singleText.value.locked)
@@ -129,37 +167,39 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
 </script>
 
 <template>
-  <div class="pp:flex pp:h-full pp:flex-col pp:gap-4 pp:overflow-y-auto pp:bg-surface-panel pp:p-3">
-    <h2 class="pp:text-xs pp:font-semibold pp:uppercase pp:tracking-wide pp:text-slate-500">
+  <div class="pp:flex pp:h-full pp:flex-col pp:gap-3.5 pp:overflow-y-auto pp:bg-app-panel pp:p-3.5">
+    <h2 class="pp:text-xs pp:font-bold pp:text-app-text">
       {{ t('panel.title') }}
     </h2>
 
     <p
       v-if="selected.length === 0"
-      class="pp:rounded-xl pp:bg-slate-50 pp:p-4 pp:text-center pp:text-xs pp:text-slate-400"
+      class="pp:px-2.5 pp:py-7 pp:text-center pp:text-xs pp:leading-relaxed pp:text-app-text3"
       data-pp-panel-empty
     >
       {{ t('panel.empty') }}
     </p>
 
     <template v-else>
-      <p
-        v-if="selected.length > 1"
-        class="pp:text-xs pp:text-slate-500"
-      >
-        {{ selected.length }} {{ t('panel.multi') }}
-      </p>
+      <!-- selection header: name + type chip -->
+      <div class="pp:flex pp:items-center pp:gap-2">
+        <span class="pp:min-w-0 pp:truncate pp:text-[13px] pp:font-semibold pp:text-app-text">
+          {{ selected.length === 1 ? selected[0]!.name : `${selected.length} ${t('panel.multi')}` }}
+        </span>
+        <span
+          v-if="selected.length === 1"
+          class="pp:rounded pp:bg-brand-soft pp:px-1.5 pp:py-0.5 pp:text-[10px] pp:font-semibold pp:text-brand-500"
+        >{{ selected[0]!.type }}</span>
+      </div>
 
       <section class="pp:flex pp:flex-col pp:gap-2">
-        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
-          {{ t('panel.position') }}
-        </h3>
         <div class="pp:grid pp:grid-cols-2 pp:gap-2">
           <NumberField
             :label="t('panel.x')"
             :model-value="xMm"
             :mixed="xMm === null"
             :disabled="allLocked"
+            unit="mm"
             @commit="commitGeometry('xMm', $event)"
           />
           <NumberField
@@ -167,6 +207,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
             :model-value="yMm"
             :mixed="yMm === null"
             :disabled="allLocked"
+            unit="mm"
             @commit="commitGeometry('yMm', $event)"
           />
           <NumberField
@@ -175,6 +216,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
             :min="1"
             :mixed="widthMm === null"
             :disabled="allLocked"
+            unit="mm"
             @commit="commitGeometry('widthMm', $event)"
           />
           <NumberField
@@ -183,6 +225,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
             :min="1"
             :mixed="heightMm === null"
             :disabled="allLocked"
+            unit="mm"
             @commit="commitGeometry('heightMm', $event)"
           />
         </div>
@@ -194,7 +237,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           :disabled="allLocked"
           @commit="commitRotation"
         />
-        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
           <input
             type="checkbox"
             :checked="allLocked"
@@ -211,12 +254,12 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
         class="pp:flex pp:flex-col pp:gap-2"
         data-pp-image-section
       >
-        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
           {{ t('palette.image') }}
         </h3>
         <button
           type="button"
-          class="pp:rounded-lg pp:border pp:border-slate-200 pp:px-3 pp:py-1.5 pp:text-xs pp:text-slate-600 hover:pp:bg-slate-50 disabled:pp:opacity-40"
+          class="pp:rounded-lg pp:border pp:border-app-border2 pp:px-3 pp:py-1.5 pp:text-xs pp:text-app-text2 pp:hover:bg-app-inset pp:disabled:opacity-40"
           :disabled="singleImage.locked"
           data-pp-replace-image
           @click="replaceImage"
@@ -241,23 +284,23 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
         class="pp:flex pp:flex-col pp:gap-2"
         data-pp-qr-section
       >
-        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
           {{ t('panel.qr') }}
         </h3>
         <textarea
           :value="singleQr.content"
           :disabled="singleQr.locked"
           rows="2"
-          class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:p-2 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none"
+          class="pp:w-full pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:p-2 pp:text-xs pp:text-app-text pp:focus:border-brand-500 pp:focus:outline-none"
           data-pp-qr-content
           @change="commitSingle(singleQr.id, singleQr.locked, { content: ($event.target as HTMLTextAreaElement).value } as ElementPatch, 'Edit QR')"
         />
-        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
           {{ t('panel.ecLevel') }}
           <select
             :value="singleQr.ecLevel"
             :disabled="singleQr.locked"
-            class="pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1 pp:text-xs"
+            class="pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:px-2 pp:py-1 pp:text-xs"
             @change="commitSingle(singleQr.id, singleQr.locked, { ecLevel: ($event.target as HTMLSelectElement).value } as ElementPatch, 'QR level')"
           >
             <option
@@ -274,23 +317,23 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
         class="pp:flex pp:flex-col pp:gap-2"
         data-pp-barcode-section
       >
-        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
           {{ t('panel.barcode') }}
         </h3>
         <input
           :value="singleBarcode.content"
           :disabled="singleBarcode.locked"
           type="text"
-          class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1.5 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none"
+          class="pp:w-full pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:px-2 pp:py-1.5 pp:text-xs pp:text-app-text pp:focus:border-brand-500 pp:focus:outline-none"
           data-pp-barcode-content
           @change="commitSingle(singleBarcode.id, singleBarcode.locked, { content: ($event.target as HTMLInputElement).value } as ElementPatch, 'Edit barcode')"
         >
-        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
           {{ t('panel.format') }}
           <select
             :value="singleBarcode.format"
             :disabled="singleBarcode.locked"
-            class="pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1 pp:text-xs"
+            class="pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:px-2 pp:py-1 pp:text-xs"
             @change="commitSingle(singleBarcode.id, singleBarcode.locked, { format: ($event.target as HTMLSelectElement).value } as ElementPatch, 'Barcode format')"
           >
             <option
@@ -300,7 +343,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
             >{{ format }}</option>
           </select>
         </label>
-        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
           <input
             type="checkbox"
             :checked="singleBarcode.showText"
@@ -317,14 +360,14 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
         class="pp:flex pp:flex-col pp:gap-2"
         data-pp-text-section
       >
-        <h3 class="pp:text-[11px] pp:font-semibold pp:text-slate-400">
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
           {{ t('panel.text') }}
         </h3>
         <textarea
           :value="singleText.content"
           :disabled="singleText.locked"
           rows="3"
-          class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:p-2 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none"
+          class="pp:w-full pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:p-2 pp:text-xs pp:text-app-text pp:focus:border-brand-500 pp:focus:outline-none"
           @change="commitText({ content: ($event.target as HTMLTextAreaElement).value }, 'Edit text')"
         />
         <NumberField
@@ -335,7 +378,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           @commit="commitText({ fontSizePt: $event }, 'Font size')"
         />
         <div class="pp:flex pp:items-center pp:justify-between pp:gap-2">
-          <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-slate-600">
+          <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
             <input
               type="checkbox"
               :checked="singleText.fontWeight === 700"
@@ -353,7 +396,7 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
               class="pp:rounded-md pp:border pp:px-2 pp:py-1 pp:text-[11px]"
               :class="singleText.align === align
                 ? 'pp:border-brand-500 pp:bg-brand-50 pp:text-brand-700'
-                : 'pp:border-slate-200 pp:text-slate-500'"
+                : 'pp:border-app-border2 pp:text-app-text2'"
               @click="commitText({ align }, 'Align text')"
             >
               {{ t(align === 'left' ? 'panel.alignLeft' : align === 'center' ? 'panel.alignCenter' : 'panel.alignRight') }}
@@ -361,6 +404,27 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           </div>
         </div>
       </section>
+      <!-- footer actions -->
+      <div class="pp:mt-1 pp:flex pp:gap-2">
+        <button
+          type="button"
+          class="pp:h-[30px] pp:flex-1 pp:rounded-[7px] pp:border pp:border-app-border2 pp:text-xs pp:text-app-text2 pp:hover:bg-app-inset pp:disabled:opacity-40"
+          :disabled="allLocked"
+          data-pp-duplicate
+          @click="duplicateSelected"
+        >
+          {{ t('panel.duplicate') }}
+        </button>
+        <button
+          type="button"
+          class="pp:h-[30px] pp:flex-1 pp:rounded-[7px] pp:border pp:border-app-border2 pp:text-xs pp:text-[#d1443c] pp:hover:bg-app-inset pp:disabled:opacity-40"
+          :disabled="allLocked"
+          data-pp-delete
+          @click="deleteSelected"
+        >
+          {{ t('panel.delete') }}
+        </button>
+      </div>
     </template>
   </div>
 </template>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
-// Small labeled number input. Commits on blur/Enter (host dispatches an
-// undoable command); arrow keys step immediately via the same commit path.
+// PrintDesignPro dim field: inset box with mono label, transparent input,
+// optional unit suffix. Commits on blur/Enter (host dispatches an undoable
+// command); invalid input restores the last committed value.
 const props = defineProps<{
   label: string
   modelValue: number | null
@@ -11,6 +12,8 @@ const props = defineProps<{
   /** Shown when a multi-selection has mixed values. */
   mixed?: boolean
   disabled?: boolean
+  /** Unit suffix, e.g. "mm" or "pt". */
+  unit?: string
 }>()
 
 const emit = defineEmits<{ commit: [value: number] }>()
@@ -39,8 +42,11 @@ function commit(): void {
 </script>
 
 <template>
-  <label class="pp:flex pp:items-center pp:gap-1.5 pp:text-xs pp:text-slate-600">
-    <span class="pp:w-4 pp:shrink-0 pp:font-medium pp:text-slate-400">{{ label }}</span>
+  <label
+    class="pp:flex pp:h-8 pp:items-center pp:gap-1.5 pp:rounded-[7px] pp:border pp:border-app-border2 pp:bg-app-inset pp:px-2"
+    :class="disabled ? 'pp:opacity-50' : ''"
+  >
+    <span class="pp:shrink-0 pp:font-uimono pp:text-[10px] pp:font-bold pp:text-app-text3">{{ label }}</span>
     <input
       v-model="draft"
       type="number"
@@ -48,9 +54,13 @@ function commit(): void {
       :min="min"
       :placeholder="mixed ? '—' : undefined"
       :disabled="disabled"
-      class="pp:w-full pp:rounded-lg pp:border pp:border-slate-200 pp:bg-white pp:px-2 pp:py-1.5 pp:text-xs pp:text-slate-800 focus:pp:border-brand-500 focus:pp:outline-none disabled:pp:bg-slate-50 disabled:pp:text-slate-400"
+      class="pp:w-full pp:min-w-0 pp:border-none pp:bg-transparent pp:p-0 pp:font-uimono pp:text-xs pp:text-app-text pp:focus:outline-none"
       @blur="commit"
       @keydown.enter.prevent="commit"
     >
+    <span
+      v-if="unit"
+      class="pp:shrink-0 pp:text-[10px] pp:text-app-text3"
+    >{{ unit }}</span>
   </label>
 </template>

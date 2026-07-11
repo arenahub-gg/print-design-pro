@@ -57,14 +57,14 @@ function formatDate(timestamp: number): string {
 </script>
 
 <template>
-  <UContainer class="py-10">
-    <div class="mb-8 flex items-center justify-between">
+  <div class="mx-auto max-w-[1060px] px-10 py-9">
+    <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold">
-          Templates
+          Thư viện mẫu
         </h1>
-        <p class="text-sm text-muted">
-          Stored locally in your browser (IndexedDB)
+        <p class="mt-1 text-[13px] text-app-text2">
+          Lưu cục bộ trong trình duyệt (IndexedDB)
         </p>
       </div>
       <UButton
@@ -131,5 +131,5 @@ function formatDate(timestamp: number): string {
         </div>
       </UCard>
     </div>
-  </UContainer>
+  </div>
 </template>

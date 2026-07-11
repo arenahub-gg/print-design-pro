@@ -29,6 +29,7 @@ const isHorizontal = props.orientation === 'horizontal'
 
 let frame = 0
 let resizeObserver: ResizeObserver | null = null
+let themeObserver: MutationObserver | null = null
 
 function draw(): void {
   const canvas = canvasRef.value
@@ -47,9 +48,17 @@ function draw(): void {
   const ctx = canvas.getContext('2d')
   if (!ctx)
     return
+  // Theme-aware colors: canvas can't use CSS vars directly, so read the
+  // emitted token values at draw time (the data-theme observer below
+  // triggers a redraw on theme flips).
+  const tokens = getComputedStyle(document.documentElement)
+  const bg = tokens.getPropertyValue('--pp-color-app-panel').trim() || '#f8fafc'
+  const tick = tokens.getPropertyValue('--pp-color-app-text3').trim() || 'rgba(100,116,139,.6)'
+  const label = tokens.getPropertyValue('--pp-color-app-text2').trim() || 'rgba(71,85,105,1)'
+
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssWidth, cssHeight)
-  ctx.fillStyle = 'rgba(248, 250, 252, 1)'
+  ctx.fillStyle = bg
   ctx.fillRect(0, 0, cssWidth, cssHeight)
 
   const lengthPx = isHorizontal ? cssWidth : cssHeight
@@ -62,8 +71,8 @@ function draw(): void {
   const endMm = (lengthPx - offset) / (mmToPx(1) * viewport.zoom)
   const firstTick = Math.floor(startMm / minorStepMm) * minorStepMm
 
-  ctx.strokeStyle = 'rgba(100, 116, 139, 0.6)'
-  ctx.fillStyle = 'rgba(71, 85, 105, 1)'
+  ctx.strokeStyle = tick
+  ctx.fillStyle = label
   ctx.lineWidth = 1
   ctx.font = '9px system-ui, sans-serif'
   ctx.textBaseline = 'top'
@@ -123,12 +132,16 @@ onMounted(() => {
   resizeObserver = new ResizeObserver(scheduleDraw)
   if (canvasRef.value)
     resizeObserver.observe(canvasRef.value)
+  // Redraw when the theme attribute flips (colors are read at draw time).
+  themeObserver = new MutationObserver(scheduleDraw)
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
 })
 
 onBeforeUnmount(() => {
   if (frame)
     cancelAnimationFrame(frame)
   resizeObserver?.disconnect()
+  themeObserver?.disconnect()
 })
 </script>
 

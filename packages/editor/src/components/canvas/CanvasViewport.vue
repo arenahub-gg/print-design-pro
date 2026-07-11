@@ -25,7 +25,7 @@ import SnapLineOverlay from './SnapLineOverlay.vue'
 // Viewport shell: owns the container, rulers, gestures, fit-on-mount, and
 // the drag-a-guide-out-of-a-ruler interaction. Page content lives on the
 // single-transform CanvasStage.
-const RULER_PX = 24
+const RULER_PX = 22
 
 const doc = useDocumentStore()
 const history = useHistoryStore()
@@ -137,8 +137,9 @@ defineExpose({ fit })
   <div
     ref="containerRef"
     tabindex="0"
-    class="pp:relative pp:h-full pp:w-full pp:overflow-hidden pp:bg-(--color-surface-canvas) pp:outline-none"
+    class="pp:relative pp:h-full pp:w-full pp:overflow-hidden pp:bg-app-desk pp:outline-none"
     :class="cursorClass"
+    style="background-image: radial-gradient(var(--pp-color-app-border2) 1px, transparent 1px); background-size: 20px 20px;"
     data-pp-viewport
     @pointerdown="onStagePointerDown"
   >
@@ -158,11 +159,11 @@ defineExpose({ fit })
 
     <!-- Rulers overlay the top/left edges; corner square joins them -->
     <div
-      class="pp:absolute pp:top-0 pp:left-0 pp:z-10 pp:border-r pp:border-b pp:border-slate-200 pp:bg-slate-50"
+      class="pp:absolute pp:top-0 pp:left-0 pp:z-10 pp:border-r pp:border-b pp:border-app-border pp:bg-app-panel"
       :style="{ width: `${RULER_PX}px`, height: `${RULER_PX}px` }"
     />
     <div
-      class="pp:absolute pp:top-0 pp:right-0 pp:z-10 pp:border-b pp:border-slate-200"
+      class="pp:absolute pp:top-0 pp:right-0 pp:z-10 pp:border-b pp:border-app-border"
       :style="{ left: `${RULER_PX}px`, height: `${RULER_PX}px` }"
     >
       <CanvasRuler
@@ -173,7 +174,7 @@ defineExpose({ fit })
       />
     </div>
     <div
-      class="pp:absolute pp:bottom-0 pp:left-0 pp:z-10 pp:border-r pp:border-slate-200"
+      class="pp:absolute pp:bottom-0 pp:left-0 pp:z-10 pp:border-r pp:border-app-border"
       :style="{ top: `${RULER_PX}px`, width: `${RULER_PX}px` }"
     >
       <CanvasRuler

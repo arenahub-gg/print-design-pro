@@ -35,3 +35,9 @@ export const PAGE_PRESETS = {
 } satisfies Record<string, PageSettings>
 
 export type PagePresetKey = keyof typeof PAGE_PRESETS
+
+/** Field-by-field equality - preset matching must include margins. */
+export function samePageSettings(a: PageSettings, b: PageSettings): boolean {
+  return (Object.keys(pageSettingsSchema.shape) as Array<keyof PageSettings>)
+    .every(key => a[key] === b[key])
+}

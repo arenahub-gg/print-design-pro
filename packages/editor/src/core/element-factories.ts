@@ -5,6 +5,7 @@ import type {
   LineElement,
   QrElement,
   RectElement,
+  TableElement,
   TextElement,
 } from './schema/elements'
 import { newId } from './schema/template'
@@ -105,6 +106,30 @@ export function createBarcode(place: PlaceAt, content = '123456789012'): Barcode
     format: 'CODE128',
     showText: true,
     lineColor: '#000000',
+  }
+}
+
+export function createTable(place: PlaceAt): TableElement {
+  return {
+    ...base(place, 100, 40),
+    type: 'table',
+    name: 'Table',
+    columns: [
+      { id: newId(), title: 'Item', widthMm: 50 },
+      { id: newId(), title: 'Qty', widthMm: 20 },
+      { id: newId(), title: 'Price', widthMm: 30 },
+    ],
+    rows: [
+      ['Sample product', '2', '10.00'],
+      ['Another item', '1', '5.50'],
+      ['', '', ''],
+    ],
+    fontSizePt: 10,
+    showHeader: true,
+    headerBackground: '#f1f5f9',
+    borderColor: '#94a3b8',
+    borderWidthMm: 0.2,
+    cellPaddingMm: 1.5,
   }
 }
 

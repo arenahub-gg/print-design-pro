@@ -69,11 +69,16 @@ export function updateElementsCommand(
         const keys = Object.keys(patch).filter(key => key in element)
         if (keys.length === 0)
           return []
+        // Object/array values (table columns/rows) are cloned: a snapshot
+        // holding live references would corrupt undo if anything later
+        // mutates them in place.
+        const cloneValue = (value: unknown): unknown =>
+          value !== null && typeof value === 'object' ? cloneJson(value) : value
         const applied = Object.fromEntries(
-          keys.map(key => [key, patch[key as keyof typeof patch]]),
+          keys.map(key => [key, cloneValue(patch[key as keyof typeof patch])]),
         ) as ElementPatch
         const snapshot = Object.fromEntries(
-          keys.map(key => [key, element[key as keyof TemplateElement]]),
+          keys.map(key => [key, cloneValue(element[key as keyof TemplateElement])]),
         ) as ElementPatch
         return [{ id, applied, snapshot }]
       })

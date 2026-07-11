@@ -71,6 +71,23 @@ describe('template export/import round-trip', () => {
     expect(restored).toEqual(doc)
   })
 
+  it('round-trips a table element', async () => {
+    const { createTable } = await import('../element-factories')
+    const doc = createEmptyTemplate()
+    doc.elements.push(createTable({ centerXMm: 100, centerYMm: 100 }))
+    const restored = importTemplate(exportTemplate(doc))
+    expect(restored).toEqual(doc)
+  })
+
+  it('rejects duplicate table column ids', async () => {
+    const { createTable } = await import('../element-factories')
+    const doc = createEmptyTemplate()
+    const table = createTable({ centerXMm: 50, centerYMm: 50 })
+    table.columns[1]!.id = table.columns[0]!.id
+    doc.elements.push(table)
+    expect(() => parseTemplate(JSON.parse(JSON.stringify(doc)))).toThrow()
+  })
+
   it('rejects unknown barcode formats', async () => {
     const { createBarcode } = await import('../element-factories')
     const doc = createEmptyTemplate()

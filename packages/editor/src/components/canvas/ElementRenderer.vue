@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TemplateElement } from '../../core/schema/elements'
+import type { TableElement, TemplateElement } from '../../core/schema/elements'
 import { mmToPx } from '../../core/units'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
 import BarcodeView from './elements/BarcodeView.vue'
 import QrView from './elements/QrView.vue'
+import TableView from './elements/TableView.vue'
 
 // Render decision (validated): each element is an absolutely-positioned div
 // carrying the rotate transform; shapes are SVG inside the div, text is
@@ -108,6 +109,12 @@ function ptToPx(pt: number): number {
       }"
     >{{ element.content }}</div>
     <!-- eslint-enable vue/multiline-html-element-content-newline -->
+
+    <!-- effective (not element): table re-lays-out live during resize preview -->
+    <TableView
+      v-else-if="element.type === 'table'"
+      :element="effective as TableElement"
+    />
 
     <QrView
       v-else-if="element.type === 'qr'"

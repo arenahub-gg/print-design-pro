@@ -62,9 +62,10 @@ test('full editor acceptance flow', async ({ page }) => {
   await page.locator('[data-pp-element-type="circle"]').click()
   await expect(page.locator('input[type="number"]').first()).toHaveValue('25')
 
-  // --- export JSON
+  // --- export JSON (Export is a dropdown since round 2)
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Export' }).click()
+  await page.locator('[data-test-export]').click()
+  await page.getByRole('menuitem', { name: /JSON/ }).click()
   const download = await downloadPromise
   const exportPath = await download.path()
   expect(exportPath).toBeTruthy()

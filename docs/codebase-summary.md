@@ -7,6 +7,8 @@ Round-1 state (2026-07-11). Monorepo map + data flow for contributors.
 ```
 pro-print-designer/          pnpm workspace (pnpm 11, node >= 20)
 ├── packages/editor/         @pro-print/editor — embeddable Vue 3 editor library
+│   ├── src/render/          print pipeline: schema→Canvas2D engine, text-layout
+│   │                        wrap, exportPng/exportPdf (pdf-lib lazy), print-browser
 │   ├── src/core/            headless logic (NO Vue components)
 │   │   ├── schema/          zod v4 template schema; TS types via z.infer
 │   │   ├── commands/        command pattern + HistoryManager (undo/redo)
@@ -73,6 +75,22 @@ UI event -> composable gesture -> interaction store preview -> renderers
 - `dist/editor.js` (ES) 152KB raw; `dist/editor.umd.cjs` 123.6KB raw / 34.2KB gz;
   `dist/editor.css` 13.3KB. zod v4 is the dominant dependency (~15-18KB gz) —
   at the recorded threshold; evaluate `zod/mini` or valibot before npm publish.
+
+## Print pipeline (round 2)
+
+ONE engine (`render/render-engine.ts`) produces every print artifact: PNG
+export, raster PDF (pdf-lib, lazy chunk), browser print (@page-sized iframe),
+and the preview modal — WYSIWYG fidelity is tested in one place. Canvas is
+mm-scaled once (`ctx.scale(dpi/25.4)`); element painters mirror
+ElementRenderer's math (center-rotate transform, stroke inset, pt→mm text).
+Text wrapping (`text-layout.ts`) mirrors CSS pre-wrap + break-words; line
+height 1.25 shared via TEXT_LINE_HEIGHT. E2E samples real pixels (rect fill
+at expected mm position) and parses exported PDFs.
+
+Known: host export buttons read the v-model snapshot, which lags the editor
+by the 400ms emit debounce. Raster PDF ≈ 300KB-1MB/page; vector text needs
+font embedding (later round). Print dialog: users must set margins None,
+scale 100% (hinted in preview modal).
 
 ## Known limitations / backlog
 

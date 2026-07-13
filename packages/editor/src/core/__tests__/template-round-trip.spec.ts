@@ -79,6 +79,61 @@ describe('template export/import round-trip', () => {
     expect(restored).toEqual(doc)
   })
 
+  it('round-trips shape elements and stroke/cap styles', async () => {
+    const { createLine, createShape } = await import('../element-factories')
+    const doc = createEmptyTemplate()
+    const star = createShape({ centerXMm: 40, centerYMm: 40 }, 'star')
+    star.strokeStyle = 'dashed'
+    const line = createLine({ centerXMm: 80, centerYMm: 80 })
+    line.strokeStyle = 'dotted'
+    line.endCap = 'arrow'
+    doc.elements.push(star, line)
+    const restored = importTemplate(exportTemplate(doc))
+    expect(restored).toEqual(doc)
+  })
+
+  it('applies stroke defaults to documents saved before round 6', () => {
+    // Legacy rect/line lack strokeStyle/startCap/endCap entirely.
+    const doc = JSON.parse(exportTemplate(createEmptyTemplate())) as {
+      elements: Array<Record<string, unknown>>
+    }
+    doc.elements.push(
+      {
+        id: newId(),
+        type: 'rect',
+        name: 'Old rect',
+        xMm: 5,
+        yMm: 5,
+        widthMm: 20,
+        heightMm: 10,
+        rotation: 0,
+        locked: false,
+        visible: true,
+        fillColor: '#fff',
+        strokeColor: '#000',
+        strokeWidthMm: 0.4,
+        cornerRadiusMm: 0,
+      },
+      {
+        id: newId(),
+        type: 'line',
+        name: 'Old line',
+        xMm: 5,
+        yMm: 30,
+        widthMm: 40,
+        heightMm: 4,
+        rotation: 0,
+        locked: false,
+        visible: true,
+        strokeColor: '#000',
+        strokeWidthMm: 0.5,
+      },
+    )
+    const parsed = parseTemplate(doc)
+    expect(parsed.elements[0]).toMatchObject({ strokeStyle: 'solid' })
+    expect(parsed.elements[1]).toMatchObject({ strokeStyle: 'solid', startCap: 'none', endCap: 'none' })
+  })
+
   it('rejects duplicate table column ids', async () => {
     const { createTable } = await import('../element-factories')
     const doc = createEmptyTemplate()

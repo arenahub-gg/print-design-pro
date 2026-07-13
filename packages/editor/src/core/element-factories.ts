@@ -5,6 +5,8 @@ import type {
   LineElement,
   QrElement,
   RectElement,
+  ShapeElement,
+  ShapeKind,
   TableElement,
   TextElement,
 } from './schema/elements'
@@ -40,6 +42,7 @@ export function createRect(place: PlaceAt): RectElement {
     fillColor: '#dbeafe',
     strokeColor: '#1e3a5f',
     strokeWidthMm: 0.4,
+    strokeStyle: 'solid',
     cornerRadiusMm: 1,
   }
 }
@@ -51,6 +54,9 @@ export function createLine(place: PlaceAt): LineElement {
     name: 'Line',
     strokeColor: '#334155',
     strokeWidthMm: 0.5,
+    strokeStyle: 'solid',
+    startCap: 'none',
+    endCap: 'none',
   }
 }
 
@@ -62,6 +68,29 @@ export function createCircle(place: PlaceAt): CircleElement {
     fillColor: '#fee2e2',
     strokeColor: '#7f1d1d',
     strokeWidthMm: 0.4,
+    strokeStyle: 'solid',
+  }
+}
+
+const SHAPE_NAMES: Record<ShapeKind, string> = {
+  triangle: 'Triangle',
+  diamond: 'Diamond',
+  star: 'Star',
+  arrow: 'Arrow',
+  pentagon: 'Pentagon',
+  hexagon: 'Hexagon',
+}
+
+export function createShape(place: PlaceAt, kind: ShapeKind): ShapeElement {
+  return {
+    ...base(place, 30, 30),
+    type: 'shape',
+    kind,
+    name: SHAPE_NAMES[kind],
+    fillColor: '#fef9c3',
+    strokeColor: '#854d0e',
+    strokeWidthMm: 0.4,
+    strokeStyle: 'solid',
   }
 }
 

@@ -16,11 +16,19 @@ const baseElementSchema = z.object({
   visible: z.boolean(),
 })
 
+// Stroke rendering style. `.default('solid')` keeps documents saved before
+// this field existed parseable.
+export const strokeStyleSchema = z.enum(['solid', 'dashed', 'dotted']).default('solid')
+
+/** Line end decoration; `.default('none')` for pre-existing documents. */
+export const lineCapStyleSchema = z.enum(['none', 'arrow']).default('none')
+
 export const rectElementSchema = baseElementSchema.extend({
   type: z.literal('rect'),
   fillColor: z.string(),
   strokeColor: z.string(),
   strokeWidthMm: z.number().min(0),
+  strokeStyle: strokeStyleSchema,
   cornerRadiusMm: z.number().min(0),
 })
 
@@ -28,6 +36,9 @@ export const lineElementSchema = baseElementSchema.extend({
   type: z.literal('line'),
   strokeColor: z.string(),
   strokeWidthMm: z.number().positive(),
+  strokeStyle: strokeStyleSchema,
+  startCap: lineCapStyleSchema,
+  endCap: lineCapStyleSchema,
 })
 
 export const circleElementSchema = baseElementSchema.extend({
@@ -35,6 +46,20 @@ export const circleElementSchema = baseElementSchema.extend({
   fillColor: z.string(),
   strokeColor: z.string(),
   strokeWidthMm: z.number().min(0),
+  strokeStyle: strokeStyleSchema,
+})
+
+export const SHAPE_KINDS = ['triangle', 'diamond', 'star', 'arrow', 'pentagon', 'hexagon'] as const
+
+// Polygon shape family: one element type, `kind` selects the point set
+// (core/shape-paths.ts is the single geometry source for view + print).
+export const shapeElementSchema = baseElementSchema.extend({
+  type: z.literal('shape'),
+  kind: z.enum(SHAPE_KINDS),
+  fillColor: z.string(),
+  strokeColor: z.string(),
+  strokeWidthMm: z.number().min(0),
+  strokeStyle: strokeStyleSchema,
 })
 
 export const textElementSchema = baseElementSchema.extend({
@@ -104,15 +129,20 @@ export const elementSchema = z.discriminatedUnion('type', [
   rectElementSchema,
   lineElementSchema,
   circleElementSchema,
+  shapeElementSchema,
   textElementSchema,
   imageElementSchema,
   qrElementSchema,
   barcodeElementSchema,
 ])
 
+export type StrokeStyle = z.infer<typeof strokeStyleSchema>
+export type LineCapStyle = z.infer<typeof lineCapStyleSchema>
+export type ShapeKind = (typeof SHAPE_KINDS)[number]
 export type RectElement = z.infer<typeof rectElementSchema>
 export type LineElement = z.infer<typeof lineElementSchema>
 export type CircleElement = z.infer<typeof circleElementSchema>
+export type ShapeElement = z.infer<typeof shapeElementSchema>
 export type TextElement = z.infer<typeof textElementSchema>
 export type ImageElement = z.infer<typeof imageElementSchema>
 export type QrElement = z.infer<typeof qrElementSchema>

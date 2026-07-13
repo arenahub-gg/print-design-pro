@@ -13,9 +13,10 @@ import {
   setPageSettingsCommand,
   updateElementsCommand,
 } from '../commands/element-commands'
+import { openTemplate } from '../open-template'
 import type { RectElement } from '../schema/elements'
 import { PAGE_PRESETS } from '../schema/page'
-import { newId, type Guide } from '../schema/template'
+import { createEmptyTemplate, newId, type Guide, type TemplateDocument } from '../schema/template'
 
 function makeRect(overrides: Partial<RectElement> = {}): RectElement {
   return {
@@ -32,6 +33,7 @@ function makeRect(overrides: Partial<RectElement> = {}): RectElement {
     fillColor: '#ffffff',
     strokeColor: '#000000',
     strokeWidthMm: 0.5,
+    strokeStyle: 'solid',
     cornerRadiusMm: 0,
     ...overrides,
   }
@@ -56,6 +58,26 @@ describe('element commands through history store', () => {
     history.redo()
     expect(doc.elements).toHaveLength(1)
     expect(doc.getElementById(rect.id)?.type).toBe('rect')
+  })
+
+  it('openTemplate migrates legacy documents so patches on new keys apply', () => {
+    const doc = useDocumentStore()
+    const history = useHistoryStore()
+    // A pre-round-6 rect: no strokeStyle key at all. Loaded through the
+    // supported open path (NOT parseTemplate directly) - openTemplate must
+    // apply schema defaults, otherwise updateElementsCommand's `key in
+    // element` filter silently drops the patch below.
+    const legacyRect = makeRect() as Partial<RectElement>
+    delete legacyRect.strokeStyle
+    const template = createEmptyTemplate()
+    template.elements.push(legacyRect as RectElement)
+    openTemplate(template as TemplateDocument, { document: doc, history })
+
+    const loaded = doc.getElementById(legacyRect.id!) as RectElement
+    expect(loaded.strokeStyle).toBe('solid')
+
+    history.dispatch(updateElementsCommand(doc, [{ id: legacyRect.id!, patch: { strokeStyle: 'dashed' } }], 'Stroke style'))
+    expect((doc.getElementById(legacyRect.id!) as RectElement).strokeStyle).toBe('dashed')
   })
 
   it('rejects direct store mutation outside a command (dev guard)', () => {

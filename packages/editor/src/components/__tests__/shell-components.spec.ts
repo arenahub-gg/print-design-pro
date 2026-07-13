@@ -140,6 +140,29 @@ describe('propertiesPanel', () => {
     expect((doc.getElementById(rect.id) as { fillColor?: string }).fillColor).toBe(rect.fillColor)
   })
 
+  it('stroke style + arrow toggles dispatch undoable commands', async () => {
+    const { doc, history, selection, wrapper } = setup()
+    const rect = createRect({ centerXMm: 50, centerYMm: 50 })
+    history.dispatch(addElementCommand(doc, rect))
+    selection.select(rect.id)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-pp-stroke-style="dashed"]').trigger('click')
+    expect((doc.getElementById(rect.id) as { strokeStyle?: string }).strokeStyle).toBe('dashed')
+    history.undo()
+    expect((doc.getElementById(rect.id) as { strokeStyle?: string }).strokeStyle).toBe('solid')
+
+    // Line-only arrow toggles
+    const { createLine } = await import('../../core/element-factories')
+    const line = createLine({ centerXMm: 50, centerYMm: 100 })
+    history.dispatch(addElementCommand(doc, line))
+    selection.select(line.id)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-pp-arrow-end]').exists()).toBe(true)
+    await wrapper.find('[data-pp-arrow-end]').setValue(true)
+    expect((doc.getElementById(line.id) as { endCap?: string }).endCap).toBe('arrow')
+  })
+
   it('text section edits content for a text element and respects lock', async () => {
     const { doc, history, selection, wrapper } = setup()
     const text = createText({ centerXMm: 50, centerYMm: 50 })

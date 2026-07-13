@@ -3,10 +3,12 @@ import type {
   CircleElement,
   LineElement,
   RectElement,
+  ShapeElement,
   TemplateElement,
   TextElement,
 } from '../core/schema/elements'
 import type { TemplateDocument } from '../core/schema/template'
+import { dashPattern, lineArrowGeometry, shapePoints, type PointMm } from '../core/shape-paths'
 import { MM_PER_INCH } from '../core/units'
 import { paintBarcode } from './element-painters/paint-barcode'
 import { paintImage, type ImageCache } from './element-painters/paint-image'
@@ -115,6 +117,9 @@ async function paintByType(
     case 'circle':
       drawCircle(ctx, element)
       break
+    case 'shape':
+      drawShape(ctx, element)
+      break
     case 'text':
       drawText(ctx, element)
       break
@@ -154,17 +159,32 @@ function drawRect(ctx: CanvasRenderingContext2D, element: RectElement): void {
   if (element.strokeWidthMm > 0) {
     ctx.strokeStyle = element.strokeColor
     ctx.lineWidth = element.strokeWidthMm
+    ctx.setLineDash(dashPattern(element.strokeStyle, element.strokeWidthMm))
     ctx.stroke()
+    ctx.setLineDash([])
   }
 }
 
 function drawLine(ctx: CanvasRenderingContext2D, element: LineElement): void {
+  const geometry = lineArrowGeometry(
+    element.widthMm,
+    element.heightMm,
+    element.strokeWidthMm,
+    element.startCap,
+    element.endCap,
+  )
   ctx.beginPath()
-  ctx.moveTo(0, element.heightMm / 2)
-  ctx.lineTo(element.widthMm, element.heightMm / 2)
+  ctx.moveTo(geometry.x1Mm, element.heightMm / 2)
+  ctx.lineTo(geometry.x2Mm, element.heightMm / 2)
   ctx.strokeStyle = element.strokeColor
   ctx.lineWidth = element.strokeWidthMm
+  ctx.setLineDash(dashPattern(element.strokeStyle, element.strokeWidthMm))
   ctx.stroke()
+  ctx.setLineDash([])
+  // Arrowheads are FILLED - never affected by the dash pattern.
+  ctx.fillStyle = element.strokeColor
+  for (const head of geometry.heads)
+    fillPolygon(ctx, head)
 }
 
 function drawCircle(ctx: CanvasRenderingContext2D, element: CircleElement): void {
@@ -177,7 +197,35 @@ function drawCircle(ctx: CanvasRenderingContext2D, element: CircleElement): void
   if (element.strokeWidthMm > 0) {
     ctx.strokeStyle = element.strokeColor
     ctx.lineWidth = element.strokeWidthMm
+    ctx.setLineDash(dashPattern(element.strokeStyle, element.strokeWidthMm))
     ctx.stroke()
+    ctx.setLineDash([])
+  }
+}
+
+function fillPolygon(ctx: CanvasRenderingContext2D, points: readonly PointMm[]): void {
+  ctx.beginPath()
+  points.forEach(([x, y], index) => index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y))
+  ctx.closePath()
+  ctx.fill()
+}
+
+/** Stroke straddles the polygon path - mirrors the SVG view (no inset). */
+function drawShape(ctx: CanvasRenderingContext2D, element: ShapeElement): void {
+  const points = shapePoints(element.kind, element.widthMm, element.heightMm)
+  ctx.beginPath()
+  points.forEach(([x, y], index) => index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y))
+  ctx.closePath()
+  ctx.fillStyle = element.fillColor
+  ctx.fill()
+  if (element.strokeWidthMm > 0) {
+    ctx.strokeStyle = element.strokeColor
+    ctx.lineWidth = element.strokeWidthMm
+    // SVG side sets stroke-linejoin="round" (star tips would miter-spike).
+    ctx.lineJoin = 'round'
+    ctx.setLineDash(dashPattern(element.strokeStyle, element.strokeWidthMm))
+    ctx.stroke()
+    ctx.setLineDash([])
   }
 }
 

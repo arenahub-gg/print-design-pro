@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TableElement, TemplateElement } from '../../core/schema/elements'
+import type { LineElement, ShapeElement, StrokeStyle, TemplateElement, TableElement } from '../../core/schema/elements'
+import { dashPattern, lineArrowGeometry, shapePoints } from '../../core/shape-paths'
 import { mmToPx } from '../../core/units'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
@@ -40,6 +41,32 @@ const wrapperStyle = computed(() => ({
 function ptToPx(pt: number): number {
   return (pt * 96) / 72
 }
+
+/** stroke-dasharray value (px) from the shared mm pattern; undefined = solid. */
+function dashPx(style: StrokeStyle, strokeWidthMm: number): string | undefined {
+  const pattern = dashPattern(style, strokeWidthMm)
+  return pattern.length ? pattern.map(mm => mmToPx(mm)).join(' ') : undefined
+}
+
+/** SVG points attribute (px) from shared mm polygon points. */
+function pointsPx(points: ReadonlyArray<readonly [number, number]>): string {
+  return points.map(([x, y]) => `${mmToPx(x)},${mmToPx(y)}`).join(' ')
+}
+
+/** Line geometry (shaft + arrowheads) from live effective mm dimensions. */
+const lineGeometry = computed(() => {
+  if (props.element.type !== 'line')
+    return null
+  const el = effective.value as LineElement
+  return lineArrowGeometry(el.widthMm, el.heightMm, el.strokeWidthMm, el.startCap, el.endCap)
+})
+
+const shapePolygon = computed(() => {
+  if (props.element.type !== 'shape')
+    return ''
+  const el = effective.value as ShapeElement
+  return pointsPx(shapePoints(el.kind, el.widthMm, el.heightMm))
+})
 </script>
 
 <template>
@@ -63,20 +90,28 @@ function ptToPx(pt: number): number {
         :fill="element.fillColor"
         :stroke="element.strokeColor"
         :stroke-width="mmToPx(element.strokeWidthMm)"
+        :stroke-dasharray="dashPx(element.strokeStyle, element.strokeWidthMm)"
       />
     </svg>
 
     <svg
-      v-else-if="element.type === 'line'"
+      v-else-if="element.type === 'line' && lineGeometry"
       class="pp:block pp:h-full pp:w-full pp:overflow-visible"
     >
       <line
-        x1="0"
+        :x1="mmToPx(lineGeometry.x1Mm)"
         :y1="box.height / 2"
-        :x2="box.width"
+        :x2="mmToPx(lineGeometry.x2Mm)"
         :y2="box.height / 2"
         :stroke="element.strokeColor"
         :stroke-width="mmToPx(element.strokeWidthMm)"
+        :stroke-dasharray="dashPx(element.strokeStyle, element.strokeWidthMm)"
+      />
+      <polygon
+        v-for="(head, index) in lineGeometry.heads"
+        :key="index"
+        :points="pointsPx(head)"
+        :fill="element.strokeColor"
       />
     </svg>
 
@@ -92,6 +127,21 @@ function ptToPx(pt: number): number {
         :fill="element.fillColor"
         :stroke="element.strokeColor"
         :stroke-width="mmToPx(element.strokeWidthMm)"
+        :stroke-dasharray="dashPx(element.strokeStyle, element.strokeWidthMm)"
+      />
+    </svg>
+
+    <svg
+      v-else-if="element.type === 'shape'"
+      class="pp:block pp:h-full pp:w-full pp:overflow-visible"
+    >
+      <polygon
+        :points="shapePolygon"
+        :fill="element.fillColor"
+        :stroke="element.strokeWidthMm > 0 ? element.strokeColor : 'none'"
+        :stroke-width="mmToPx(element.strokeWidthMm)"
+        :stroke-dasharray="dashPx(element.strokeStyle, element.strokeWidthMm)"
+        stroke-linejoin="round"
       />
     </svg>
 

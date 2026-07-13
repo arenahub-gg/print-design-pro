@@ -15,6 +15,7 @@ const GLYPHS: Record<ElementType, string> = {
   rect: '▭',
   line: '—',
   circle: '◯',
+  shape: '⬟',
   text: 'Aa',
   image: '🖼',
   qr: '▦',

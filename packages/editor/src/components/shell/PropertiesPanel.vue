@@ -8,9 +8,14 @@ import { newId } from '../../core/schema/template'
 import {
   BARCODE_FORMATS,
   type BarcodeElement,
+  type CircleElement,
   type ElementPatch,
   type ImageElement,
+  type LineElement,
   type QrElement,
+  type RectElement,
+  type ShapeElement,
+  type StrokeStyle,
   type TableElement,
   type TextElement,
 } from '../../core/schema/elements'
@@ -51,6 +56,14 @@ const singleBarcode = computed<BarcodeElement | null>(() =>
 const singleTable = computed<TableElement | null>(() =>
   single.value?.type === 'table' ? single.value : null,
 )
+const singleLine = computed<LineElement | null>(() =>
+  single.value?.type === 'line' ? single.value : null,
+)
+/** Elements carrying a stroke (style + width editable in the panel). */
+const singleStroked = computed<RectElement | LineElement | CircleElement | ShapeElement | null>(() => {
+  const el = single.value
+  return el && (el.type === 'rect' || el.type === 'line' || el.type === 'circle' || el.type === 'shape') ? el : null
+})
 
 /** Commit a patch on the single selected element (skips locked). */
 function commitSingle(id: string, locked: boolean, patch: ElementPatch, label: string): void {
@@ -177,6 +190,7 @@ const colorProps = computed<ColorProp[]>(() => {
   switch (el.type) {
     case 'rect':
     case 'circle':
+    case 'shape':
       return [
         { key: 'fillColor', labelKey: 'color.fill', value: el.fillColor, allowTransparent: true },
         { key: 'strokeColor', labelKey: 'color.stroke', value: el.strokeColor },
@@ -201,6 +215,27 @@ const colorProps = computed<ColorProp[]>(() => {
       return []
   }
 })
+
+const STROKE_STYLES: Array<{ value: StrokeStyle, labelKey: `stroke.${string}` }> = [
+  { value: 'solid', labelKey: 'stroke.solid' },
+  { value: 'dashed', labelKey: 'stroke.dashed' },
+  { value: 'dotted', labelKey: 'stroke.dotted' },
+]
+
+function commitStroke(patch: ElementPatch, label: string): void {
+  const el = singleStroked.value
+  if (!el || el.locked)
+    return
+  history.dispatch(updateElementsCommand(doc, [{ id: el.id, patch }], label))
+}
+
+function toggleLineCap(side: 'startCap' | 'endCap'): void {
+  const el = singleLine.value
+  if (!el || el.locked)
+    return
+  const next = el[side] === 'arrow' ? 'none' : 'arrow'
+  history.dispatch(updateElementsCommand(doc, [{ id: el.id, patch: { [side]: next } as ElementPatch }], 'Line arrows'))
+}
 
 function commitColor(key: string, value: string): void {
   if (!single.value || single.value.locked)
@@ -301,6 +336,80 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           >
           {{ t('panel.locked') }}
         </label>
+      </section>
+
+      <section
+        v-if="singleStroked"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-stroke-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
+          {{ t('panel.strokeSection') }}
+        </h3>
+        <div class="pp:flex pp:gap-1">
+          <button
+            v-for="style in STROKE_STYLES"
+            :key="style.value"
+            type="button"
+            class="pp:flex-1 pp:rounded-md pp:border pp:px-1 pp:py-1 pp:text-[11px]"
+            :class="singleStroked.strokeStyle === style.value
+              ? 'pp:border-brand-500 pp:bg-brand-soft pp:text-brand-500'
+              : 'pp:border-app-border2 pp:text-app-text2'"
+            :disabled="singleStroked.locked"
+            :data-pp-stroke-style="style.value"
+            @click="commitStroke({ strokeStyle: style.value } as ElementPatch, 'Stroke style')"
+          >
+            {{ t(style.labelKey as never) }}
+          </button>
+        </div>
+        <NumberField
+          :label="t('panel.strokeWidth')"
+          :model-value="singleStroked.strokeWidthMm"
+          :min="singleStroked.type === 'line' ? 0.1 : 0"
+          :step="0.1"
+          :disabled="singleStroked.locked"
+          unit="mm"
+          data-pp-stroke-width
+          @commit="commitStroke({ strokeWidthMm: roundMm($event) } as ElementPatch, 'Stroke width')"
+        />
+        <NumberField
+          v-if="singleStroked.type === 'rect'"
+          :label="t('panel.cornerRadius')"
+          :model-value="singleStroked.cornerRadiusMm"
+          :min="0"
+          :step="0.5"
+          :disabled="singleStroked.locked"
+          unit="mm"
+          @commit="commitStroke({ cornerRadiusMm: roundMm($event) } as ElementPatch, 'Corner radius')"
+        />
+        <div
+          v-if="singleLine"
+          class="pp:flex pp:items-center pp:gap-4"
+        >
+          <span class="pp:text-[11px] pp:font-semibold pp:text-app-text3">{{ t('panel.arrows') }}</span>
+          <label class="pp:flex pp:items-center pp:gap-1.5 pp:text-xs pp:text-app-text2">
+            <input
+              type="checkbox"
+              :checked="singleLine.startCap === 'arrow'"
+              :disabled="singleLine.locked"
+              class="pp:accent-brand-500"
+              data-pp-arrow-start
+              @change="toggleLineCap('startCap')"
+            >
+            {{ t('panel.arrowStart') }}
+          </label>
+          <label class="pp:flex pp:items-center pp:gap-1.5 pp:text-xs pp:text-app-text2">
+            <input
+              type="checkbox"
+              :checked="singleLine.endCap === 'arrow'"
+              :disabled="singleLine.locked"
+              class="pp:accent-brand-500"
+              data-pp-arrow-end
+              @change="toggleLineCap('endCap')"
+            >
+            {{ t('panel.arrowEnd') }}
+          </label>
+        </div>
       </section>
 
       <section

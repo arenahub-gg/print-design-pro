@@ -18,6 +18,8 @@ export {
   lineElementSchema,
   qrElementSchema,
   rectElementSchema,
+  SHAPE_KINDS,
+  shapeElementSchema,
   textElementSchema,
 } from './core/schema/elements'
 export type {
@@ -29,12 +31,18 @@ export type {
   ElementPatch,
   ElementType,
   ImageElement,
+  LineCapStyle,
   LineElement,
   QrElement,
   RectElement,
+  ShapeElement,
+  ShapeKind,
+  StrokeStyle,
   TemplateElement,
   TextElement,
 } from './core/schema/elements'
+export { dashPattern, lineArrowGeometry, shapePoints } from './core/shape-paths'
+export type { LineArrowGeometry } from './core/shape-paths'
 export { PAGE_PRESETS, pageSettingsSchema } from './core/schema/page'
 export type { PagePresetKey, PageSettings } from './core/schema/page'
 export { createEmptyTemplate, guideSchema, newId, templateDocumentSchema } from './core/schema/template'
@@ -61,7 +69,7 @@ export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'
 // Shell (primary public component)
 export { default as PrintDesigner } from './components/shell/PrintDesigner.vue'
 export type { EditorLocale } from './locales/messages'
-export { createBarcode, createCircle, createImage, createLine, createQr, createRect, createTable, createText } from './core/element-factories'
+export { createBarcode, createCircle, createImage, createLine, createQr, createRect, createShape, createTable, createText } from './core/element-factories'
 export { computeTableLayout } from './core/table-layout'
 export type { TableLayout, TableMeasurer } from './core/table-layout'
 

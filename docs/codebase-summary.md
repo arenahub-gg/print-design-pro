@@ -98,7 +98,11 @@ scale 100% (hinted in preview modal).
 
 ## Elements (round 3 complete)
 
-rect · line · circle · text (static) · image (data-URL, ≤2MB upload) ·
+rect · line · circle · shape (round 6: polygon family — triangle/diamond/
+star/arrow/pentagon/hexagon via `core/shape-paths.ts`, the ONE mm-geometry
+source for both the SVG view and the engine painter; strokes straddle the
+path in both, `lineJoin: round` mirrored) · text (static) · image (data-URL,
+≤2MB upload) ·
 qr (qrcode lib, EC level, square-enforced) · barcode (jsbarcode: CODE128/
 EAN13/EAN8/CODE39/ITF14/UPC, showText, invalid content → editor placeholder,
 print paints nothing) · table (round 4: `computeTableLayout` is the ONE
@@ -113,6 +117,23 @@ checklist for new
 types: zod schema → factory → ElementRenderer branch (or elements/*View.vue)
 → engine painter (element-painters/) → palette tile → properties section →
 i18n → round-trip test.
+
+## Stroke styles + line arrows (round 6)
+
+`strokeStyle: solid|dashed|dotted` on rect/line/circle/shape and line
+`startCap`/`endCap: none|arrow` are the first schema fields added with zod
+`.default()`. Migration rule discovered in review: hosts hand `openTemplate`
+documents straight from IndexedDB WITHOUT parsing, and
+`updateElementsCommand` drops patch keys absent from the element (`key in
+element` filter) — so **`openTemplate` now runs `parseTemplate` on its
+clone** as the single migration choke point. Any future field addition MUST
+use `.default()` and relies on this. Dash patterns (`dashPattern`) and
+arrowhead geometry (`lineArrowGeometry`, shaft shortened under filled heads
+so dashes never poke through) live in `core/shape-paths.ts` beside the
+polygon points. Panel gains a "Nét vẽ" section (style segmented control,
+stroke width, rect corner radius) and line arrow checkboxes; the topbar tool
+strip gains a shapes flyout (position:fixed — the strip scrolls; closes on
+outside-pointerdown/scroll/resize/Escape).
 
 ## v-model contract hardening (round 4)
 

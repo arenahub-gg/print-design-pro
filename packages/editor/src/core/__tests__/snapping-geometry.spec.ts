@@ -25,6 +25,7 @@ function rect(x: number, y: number, w: number, h: number, rotation = 0): RectEle
     fillColor: '#fff',
     strokeColor: '#000',
     strokeWidthMm: 0,
+    strokeStyle: 'solid',
     cornerRadiusMm: 0,
   }
 }

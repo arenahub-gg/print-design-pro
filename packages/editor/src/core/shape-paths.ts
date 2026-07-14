@@ -49,19 +49,53 @@ function blockArrow(w: number, h: number): PointMm[] {
 
 /** Closed polygon vertices (mm) for a shape kind inside a w x h box. */
 export function shapePoints(kind: ShapeKind, widthMm: number, heightMm: number): PointMm[] {
+  const w = widthMm
+  const h = heightMm
   switch (kind) {
     case 'triangle':
-      return [[widthMm / 2, 0], [widthMm, heightMm], [0, heightMm]]
+      return [[w / 2, 0], [w, h], [0, h]]
+    case 'rightTriangle':
+      return [[0, 0], [w, h], [0, h]]
     case 'diamond':
-      return [[widthMm / 2, 0], [widthMm, heightMm / 2], [widthMm / 2, heightMm], [0, heightMm / 2]]
-    case 'star':
-      return star(widthMm, heightMm)
-    case 'arrow':
-      return blockArrow(widthMm, heightMm)
+      return [[w / 2, 0], [w, h / 2], [w / 2, h], [0, h / 2]]
+    case 'parallelogram':
+      return [[w * 0.25, 0], [w, 0], [w * 0.75, h], [0, h]]
+    case 'trapezoid':
+      return [[w * 0.25, 0], [w * 0.75, 0], [w, h], [0, h]]
     case 'pentagon':
-      return regularPolygon(5, widthMm, heightMm, -Math.PI / 2)
+      return regularPolygon(5, w, h, -Math.PI / 2)
     case 'hexagon':
-      return regularPolygon(6, widthMm, heightMm, 0)
+      return regularPolygon(6, w, h, 0)
+    case 'octagon':
+      // Offset half a step so the top and bottom edges are flat.
+      return regularPolygon(8, w, h, Math.PI / 8)
+    case 'star':
+      return star(w, h)
+    case 'star4':
+      return star(w, h, 4, 0.4)
+    case 'star6':
+      return star(w, h, 6, 0.55)
+    case 'arrow':
+      return blockArrow(w, h)
+    case 'chevron':
+      // Right-pointing angle band; notch depth matches the head start (40%).
+      return [[0, 0], [w * 0.6, 0], [w, h / 2], [w * 0.6, h], [0, h], [w * 0.4, h / 2]]
+    case 'plus':
+      // Cross with arms one third of each dimension.
+      return [
+        [w / 3, 0],
+        [(w * 2) / 3, 0],
+        [(w * 2) / 3, h / 3],
+        [w, h / 3],
+        [w, (h * 2) / 3],
+        [(w * 2) / 3, (h * 2) / 3],
+        [(w * 2) / 3, h],
+        [w / 3, h],
+        [w / 3, (h * 2) / 3],
+        [0, (h * 2) / 3],
+        [0, h / 3],
+        [w / 3, h / 3],
+      ]
   }
 }
 

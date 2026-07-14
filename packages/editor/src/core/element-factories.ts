@@ -74,11 +74,19 @@ export function createCircle(place: PlaceAt): CircleElement {
 
 const SHAPE_NAMES: Record<ShapeKind, string> = {
   triangle: 'Triangle',
+  rightTriangle: 'Right triangle',
   diamond: 'Diamond',
-  star: 'Star',
-  arrow: 'Arrow',
+  parallelogram: 'Parallelogram',
+  trapezoid: 'Trapezoid',
   pentagon: 'Pentagon',
   hexagon: 'Hexagon',
+  octagon: 'Octagon',
+  star: 'Star',
+  star4: '4-point star',
+  star6: '6-point star',
+  arrow: 'Arrow',
+  chevron: 'Chevron',
+  plus: 'Plus',
 }
 
 export function createShape(place: PlaceAt, kind: ShapeKind): ShapeElement {

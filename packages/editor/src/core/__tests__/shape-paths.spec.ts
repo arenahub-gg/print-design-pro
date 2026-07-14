@@ -5,11 +5,19 @@ import { dashPattern, lineArrowGeometry, shapePoints } from '../shape-paths'
 describe('shapePoints', () => {
   const EXPECTED_COUNTS = {
     triangle: 3,
+    rightTriangle: 3,
     diamond: 4,
-    star: 10,
-    arrow: 7,
+    parallelogram: 4,
+    trapezoid: 4,
     pentagon: 5,
     hexagon: 6,
+    octagon: 8,
+    star: 10,
+    star4: 8,
+    star6: 12,
+    arrow: 7,
+    chevron: 6,
+    plus: 12,
   } as const
 
   it('returns the expected vertex count per kind', () => {

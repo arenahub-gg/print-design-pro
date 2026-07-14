@@ -11,6 +11,7 @@ definePageMeta({ layout: false })
 const route = useRoute()
 const repo = useTemplateRepository()
 const toast = useToast()
+const { locale } = useAppLocale()
 
 const template = ref<TemplateDocument | null>(null)
 const notFound = ref(false)
@@ -164,7 +165,7 @@ async function importJson(event: Event): Promise<void> {
         v-if="template"
         :model-value="template"
         :saving="saving"
-        locale="vi"
+        :locale="locale"
         class="h-full"
         @update:model-value="onDocumentUpdate"
         @home="navigateTo('/templates')"

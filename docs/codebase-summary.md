@@ -32,7 +32,9 @@ pro-print-designer/          pnpm workspace (pnpm 11, node >= 20)
 │   └── playground/          bare Vue 3 bench (`pnpm --filter @pro-print/editor play`)
 └── apps/web/                Nuxt 4 + Nuxt UI 4 app
     ├── app/layouts/         default: 220px sidebar (nav + theme toggle)
-    ├── app/pages/           home (quick sizes + recents), /templates (CRUD grid),
+    ├── app/components/      landing/ section components (round 8)
+    ├── app/pages/           / (public landing, layout: false), /app (dashboard:
+    │                        quick sizes + recents), /templates (CRUD grid),
     │                        /settings (theme), /editor/[id] (ssr: false)
     ├── app/composables/     use-template-repository (IndexedDB via idb), use-app-theme
     └── e2e/                 Playwright acceptance smoke

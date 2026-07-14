@@ -7,6 +7,7 @@ import type {
   TemplateElement,
   TextElement,
 } from '../core/schema/elements'
+import { ensureDocumentFonts, fontStack } from '../core/fonts'
 import type { TemplateDocument } from '../core/schema/template'
 import { dashPattern, lineArrowGeometry, shapePoints, type PointMm } from '../core/shape-paths'
 import { MM_PER_INCH } from '../core/units'
@@ -64,6 +65,12 @@ export async function renderToCanvas(doc: TemplateDocument, options: RenderOptio
     ctx.fillStyle = background
     ctx.fillRect(0, 0, doc.page.widthMm, doc.page.heightMm)
   }
+
+  // Custom document fonts must be in document.fonts BEFORE any measure/paint,
+  // or canvas silently falls back and wrapping diverges from the editor.
+  await ensureDocumentFonts(
+    doc.elements.flatMap(element => (element.type === 'text' ? [element.fontFamily] : [])),
+  )
 
   // Per-render bitmap cache: each unique image src loads once.
   const imageCache: ImageCache = new Map()
@@ -243,7 +250,7 @@ function drawText(ctx: CanvasRenderingContext2D, element: TextElement): void {
   ctx.rect(0, 0, element.widthMm, element.heightMm)
   ctx.clip()
 
-  ctx.font = `${element.fontWeight} ${fontSizeMm}px ${TEXT_FONT_STACK}`
+  ctx.font = `${element.fontWeight} ${fontSizeMm}px ${fontStack(element.fontFamily, TEXT_FONT_STACK)}`
   ctx.fillStyle = element.color
   ctx.textBaseline = 'alphabetic'
   ctx.textAlign = element.align

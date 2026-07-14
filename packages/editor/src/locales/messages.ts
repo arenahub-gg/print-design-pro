@@ -139,6 +139,9 @@ export const messages = {
     'align.bottom': 'Align bottom',
     'align.distributeH': 'Distribute horizontally',
     'align.distributeV': 'Distribute vertically',
+    'panel.font': 'Font',
+    'panel.fontDefault': 'Default',
+    'batch.badBarcodes': 'Invalid barcode content — fix the CSV before printing:',
   },
   vi: {
     'palette.elements': 'Thành phần',
@@ -277,6 +280,9 @@ export const messages = {
     'align.bottom': 'Căn dưới',
     'align.distributeH': 'Phân bố ngang',
     'align.distributeV': 'Phân bố dọc',
+    'panel.font': 'Phông chữ',
+    'panel.fontDefault': 'Mặc định',
+    'batch.badBarcodes': 'Mã vạch không hợp lệ — sửa CSV trước khi in:',
   },
   zh: {
     'palette.elements': '元素',
@@ -415,6 +421,9 @@ export const messages = {
     'align.bottom': '底部对齐',
     'align.distributeH': '水平均匀分布',
     'align.distributeV': '垂直均匀分布',
+    'panel.font': '字体',
+    'panel.fontDefault': '默认',
+    'batch.badBarcodes': '条形码内容无效 — 请先修正 CSV 再打印：',
   },
 } as const
 

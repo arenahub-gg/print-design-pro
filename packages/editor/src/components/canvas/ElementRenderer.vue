@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import type { LineElement, ShapeElement, StrokeStyle, TemplateElement, TableElement } from '../../core/schema/elements'
 import { dashPattern, lineArrowGeometry, shapePoints } from '../../core/shape-paths'
 import { mmToPx } from '../../core/units'
+import { ensureFontLoaded, fontStack } from '../../core/fonts'
 import { substituteVariables } from '../../core/variables'
 import { useDocumentStore } from '../../stores/document-store'
+import { watch } from 'vue'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
 import BarcodeView from './elements/BarcodeView.vue'
@@ -25,6 +27,17 @@ const textContent = computed(() =>
   props.element.type === 'text'
     ? substituteVariables(props.element.content, doc.document.variables)
     : '')
+
+/** Custom document font (falls back to the pinned default stack). */
+const textFontFamily = computed(() =>
+  props.element.type === 'text' ? fontStack(props.element.fontFamily, TEXT_FONT_STACK) : TEXT_FONT_STACK)
+
+// Load lazily so imported documents render their fonts without panel visits.
+watch(
+  () => (props.element.type === 'text' ? props.element.fontFamily : ''),
+  family => void ensureFontLoaded(family),
+  { immediate: true },
+)
 
 /** Schema state + any live gesture preview. */
 const effective = computed(() => interaction.effectiveElement(props.element))
@@ -161,7 +174,7 @@ const shapePolygon = computed(() => {
       :style="{
         fontSize: `${ptToPx(element.fontSizePt)}px`,
         fontWeight: element.fontWeight,
-        fontFamily: TEXT_FONT_STACK,
+        fontFamily: textFontFamily,
         textAlign: element.align,
         color: element.color,
         lineHeight: TEXT_LINE_HEIGHT,

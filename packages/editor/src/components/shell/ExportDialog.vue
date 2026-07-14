@@ -4,6 +4,7 @@ import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { cloneJson } from '../../core/clone'
 import { CsvParseError, parseCsv } from '../../core/csv'
 import { collectVariables, resolveDocument } from '../../core/variables'
+import { validateBatchBarcodes, type BatchBarcodeFailure } from '../../render/batch-preflight'
 import { downloadBlob } from '../../render/download'
 import { exportPdf, exportPdfBatch, MAX_BATCH_ROWS } from '../../render/export-pdf'
 import { exportPng } from '../../render/export-image'
@@ -46,10 +47,13 @@ const missingVariables = computed(() =>
 const missingTokens = computed(() =>
   missingVariables.value.map(name => `{{${name}}}`).join(', '))
 
+const barcodeFailures = ref<BatchBarcodeFailure[]>([])
+
 function resetCsv(): void {
   csvRows.value = []
   csvHeaders.value = []
   csvFileName.value = null
+  barcodeFailures.value = []
 }
 
 async function onCsvChange(event: Event): Promise<void> {
@@ -65,6 +69,9 @@ async function onCsvChange(event: Event): Promise<void> {
       throw new CsvParseError(t('batch.noRows'))
     if (rows.length > MAX_BATCH_ROWS)
       throw new CsvParseError(t('batch.tooMany').replace('{max}', String(MAX_BATCH_ROWS)))
+    // Pre-flight: a row with invalid barcode content would print a BLANK
+    // barcode on a page nobody previews - block the batch instead.
+    barcodeFailures.value = await validateBatchBarcodes(doc.document, rows)
     csvHeaders.value = headers
     csvRows.value = rows
     csvFileName.value = file.name
@@ -77,6 +84,9 @@ async function onCsvChange(event: Event): Promise<void> {
 
 /** Batch applies to PDF and direct print; PNG always exports one sample page. */
 const batchActive = computed(() => csvRows.value.length > 0 && format.value !== 'png')
+
+/** Batch is blocked (CTA disabled) while any row carries invalid barcodes. */
+const batchBlocked = computed(() => batchActive.value && barcodeFailures.value.length > 0)
 
 // computed: labels follow runtime locale switches
 const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `export.${string}` }>>(() => [
@@ -126,7 +136,7 @@ async function renderPreview(ticket: number): Promise<void> {
 }
 
 async function run(): Promise<void> {
-  if (busy.value)
+  if (busy.value || batchBlocked.value)
     return
   busy.value = true
   errorText.value = null
@@ -239,6 +249,24 @@ async function run(): Promise<void> {
             >
               {{ t('batch.missing') }} {{ missingTokens }}
             </p>
+            <div
+              v-if="barcodeFailures.length"
+              class="pp:mt-1.5 pp:rounded-lg pp:bg-rose-50 pp:p-2 pp:text-[10px] pp:text-rose-600"
+              data-pp-batch-barcode-errors
+            >
+              <p class="pp:font-semibold">
+                {{ t('batch.badBarcodes') }}
+              </p>
+              <p
+                v-for="failure in barcodeFailures.slice(0, 5)"
+                :key="`${failure.row}-${failure.elementName}`"
+              >
+                #{{ failure.row }} · {{ failure.elementName }} · "{{ failure.content }}"
+              </p>
+              <p v-if="barcodeFailures.length > 5">
+                +{{ barcodeFailures.length - 5 }}…
+              </p>
+            </div>
           </div>
 
           <p class="pp:text-[11px] pp:leading-relaxed pp:text-app-text3">
@@ -264,7 +292,7 @@ async function run(): Promise<void> {
             <button
               type="button"
               class="pp:h-[38px] pp:flex-1 pp:rounded-lg pp:bg-brand-500 pp:text-[13px] pp:font-semibold pp:text-white pp:hover:bg-brand-600 pp:disabled:opacity-50"
-              :disabled="busy"
+              :disabled="busy || batchBlocked"
               data-pp-export-run
               @click="run"
             >

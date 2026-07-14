@@ -31,4 +31,9 @@ test('landing page renders in English, switches to Vietnamese, CTA opens the wor
   // Workspace dashboard: greeting + quick-size tiles + sidebar shell
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
   await expect(page.locator('[data-test-new-design]')).toBeVisible()
+  // First run seeds five demo templates into the recents grid.
+  // ('Shipping label' also names a quick-start tile - assert on the two
+  // demo names that are unique to the seeded records.)
+  await expect(page.getByText('Event badge', { exact: true })).toBeVisible()
+  await expect(page.getByText('Warehouse bin label', { exact: true })).toBeVisible()
 })

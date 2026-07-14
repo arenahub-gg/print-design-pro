@@ -21,16 +21,6 @@ const VIEWPORT = { width: 1440, height: 860 }
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 2 })
 
-/** Place the just-added (auto-selected) element via the panel X/Y fields. */
-async function placeSelected(xMm, yMm) {
-  const xField = page.locator('input[type="number"]').first()
-  await xField.fill(String(xMm))
-  await xField.press('Enter')
-  const yField = page.locator('input[type="number"]').nth(1)
-  await yField.fill(String(yMm))
-  await yField.press('Enter')
-}
-
 async function setTheme(theme) {
   await page.evaluate((value) => {
     localStorage.setItem('pp-theme', value)
@@ -47,12 +37,12 @@ await page.waitForTimeout(500) // fonts
 await page.screenshot({ path: resolve(outDir, 'landing.png') })
 console.log('captured landing.png')
 
-// --- 2. Editor with content (light) ------------------------------------
+// --- 2. Editor with content (light): open the seeded demo template -----
 await page.goto(`${BASE}/templates`)
-// Dev-server hydration race: the first click can land before listeners
-// attach - retry the click+navigation pair (same pattern as the e2e suite).
+// Dev-server hydration race: retry the click+navigation pair (same pattern
+// as the e2e suite). The demo seed runs inside the first list() call.
 for (let attempt = 0; attempt < 10; attempt++) {
-  await page.getByRole('button', { name: 'New template' }).click()
+  await page.getByText('Shipping label', { exact: true }).first().click()
   const navigated = await page
     .waitForURL(/\/editor\//, { timeout: 3000 })
     .then(() => true, () => false)
@@ -60,23 +50,10 @@ for (let attempt = 0; attempt < 10; attempt++) {
     break
 }
 await page.waitForSelector('[data-pp-viewport]')
-
-// Compose a believable shipping-label style document on the A4 page.
-await page.locator('[data-pp-palette-tile="rect"]').click()
-await placeSelected(15, 15)
-await page.locator('[data-pp-palette-tile="text"]').click()
-await page.locator('[data-pp-text-section] textarea').fill('CÔNG TY PRO PRINT\n123 Nguyễn Trãi, Hà Nội')
-await placeSelected(20, 20)
-await page.locator('[data-pp-palette-tile="qr"]').click()
-await placeSelected(150, 15)
-await page.locator('[data-pp-palette-tile="barcode"]').click()
-await placeSelected(15, 60)
-await page.locator('[data-pp-palette-tile="shape"]').click()
-await page.locator('[data-pp-shape-kind="star"]').click()
-await placeSelected(150, 60)
-await page.locator('[data-pp-palette-tile="table"]').click()
-await placeSelected(15, 100)
-await page.waitForTimeout(700)
+// QR + barcode render async; give them a beat
+await page.waitForSelector('[data-pp-element-type="qr"] img')
+await page.waitForSelector('[data-pp-element-type="barcode"] img')
+await page.waitForTimeout(500)
 
 await page.screenshot({ path: resolve(outDir, 'editor-light.png') })
 console.log('captured editor-light.png')

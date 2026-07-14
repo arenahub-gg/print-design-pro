@@ -1,6 +1,7 @@
 import type { TemplateDocument } from '@pro-print/editor'
 import { createEmptyTemplate, parseTemplate } from '@pro-print/editor'
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+import { createDemoTemplates } from '~/utils/demo-templates'
 
 // Local-first template storage (IndexedDB). Server sync is a later round -
 // this module is the only place that knows how templates are persisted.
@@ -32,8 +33,37 @@ function db(): Promise<IDBPDatabase<TemplateDb>> {
   return dbPromise
 }
 
+// First-run seed: five demo templates so the library isn't empty. The
+// localStorage flag (not "is the store empty") keeps deleted demos deleted.
+// Memoized promise: every lister awaits the same seed pass, so the first
+// page load can never race a half-seeded store.
+const SEED_FLAG = 'pp-demo-seeded-v1'
+let seedPromise: Promise<void> | null = null
+
+function ensureSeeded(save: (doc: TemplateDocument) => Promise<TemplateRecord>): Promise<void> {
+  seedPromise ??= (async () => {
+    try {
+      if (localStorage.getItem(SEED_FLAG))
+        return
+      const existing = await (await db()).count('templates')
+      if (existing === 0) {
+        // Sequential saves: updatedAt ascends, so the list (newest first)
+        // shows the demos in authored order.
+        for (const doc of createDemoTemplates())
+          await save(doc)
+      }
+      localStorage.setItem(SEED_FLAG, '1')
+    }
+    catch {
+      // Seeding is best-effort - storage errors surface on real operations.
+    }
+  })()
+  return seedPromise
+}
+
 export function useTemplateRepository() {
   async function list(): Promise<TemplateRecord[]> {
+    await ensureSeeded(save)
     const records = await (await db()).getAllFromIndex('templates', 'by-updated')
     return records.reverse()
   }

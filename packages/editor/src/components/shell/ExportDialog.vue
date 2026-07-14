@@ -2,10 +2,12 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { cloneJson } from '../../core/clone'
+import { CsvParseError, parseCsv } from '../../core/csv'
+import { collectVariables, resolveDocument } from '../../core/variables'
 import { downloadBlob } from '../../render/download'
-import { exportPdf } from '../../render/export-pdf'
+import { exportPdf, exportPdfBatch, MAX_BATCH_ROWS } from '../../render/export-pdf'
 import { exportPng } from '../../render/export-image'
-import { printDocument } from '../../render/print-browser'
+import { printDocument, printDocumentBatch } from '../../render/print-browser'
 import { renderToCanvas } from '../../render/render-engine'
 import { useDocumentStore } from '../../stores/document-store'
 
@@ -28,6 +30,54 @@ const errorText = ref<string | null>(null)
 /** Invalidates in-flight preview renders when the dialog closes/reopens. */
 let previewTicket = 0
 
+// ---- CSV batch (round 13) --------------------------------------------
+const usedVariables = computed(() => collectVariables(doc.document))
+const csvRows = ref<Array<Record<string, string>>>([])
+const csvHeaders = ref<string[]>([])
+const csvFileName = ref<string | null>(null)
+
+/** Variables the CSV does not provide - they fall back to sample values. */
+const missingVariables = computed(() =>
+  csvHeaders.value.length === 0
+    ? []
+    : usedVariables.value.filter(name => !csvHeaders.value.includes(name)))
+
+/** Vue interpolation ends at the first `}}` even inside strings - build here. */
+const missingTokens = computed(() =>
+  missingVariables.value.map(name => `{{${name}}}`).join(', '))
+
+function resetCsv(): void {
+  csvRows.value = []
+  csvHeaders.value = []
+  csvFileName.value = null
+}
+
+async function onCsvChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file)
+    return
+  errorText.value = null
+  try {
+    const { headers, rows } = parseCsv(await file.text())
+    if (rows.length === 0)
+      throw new CsvParseError(t('batch.noRows'))
+    if (rows.length > MAX_BATCH_ROWS)
+      throw new CsvParseError(t('batch.tooMany').replace('{max}', String(MAX_BATCH_ROWS)))
+    csvHeaders.value = headers
+    csvRows.value = rows
+    csvFileName.value = file.name
+  }
+  catch (error) {
+    resetCsv()
+    errorText.value = error instanceof Error ? error.message : String(error)
+  }
+}
+
+/** Batch applies to PDF and direct print; PNG always exports one sample page. */
+const batchActive = computed(() => csvRows.value.length > 0 && format.value !== 'png')
+
 // computed: labels follow runtime locale switches
 const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `export.${string}` }>>(() => [
   { value: 'png', label: 'PNG', descKey: 'export.pngDesc' },
@@ -36,6 +86,10 @@ const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `e
 ])
 
 const ctaLabel = computed(() => {
+  if (batchActive.value) {
+    const key = format.value === 'pdf' ? 'batch.ctaPdf' : 'batch.ctaPrint'
+    return t(key as never).replace('{n}', String(csvRows.value.length))
+  }
   if (format.value === 'png')
     return t('export.ctaPng')
   if (format.value === 'pdf')
@@ -47,6 +101,7 @@ watch(() => props.open, async (open) => {
   previewTicket++
   if (open) {
     errorText.value = null
+    resetCsv()
     void renderPreview(previewTicket)
     await nextTick()
     overlayRef.value?.focus()
@@ -58,7 +113,8 @@ watch(() => props.open, async (open) => {
 
 async function renderPreview(ticket: number): Promise<void> {
   try {
-    const canvas = await renderToCanvas(cloneJson(doc.document), { dpi: 150 })
+    // Preview shows sample variable values - same as single exports.
+    const canvas = await renderToCanvas(resolveDocument(cloneJson(doc.document)), { dpi: 150 })
     if (ticket === previewTicket)
       previewUrl.value = canvas.toDataURL('image/png')
   }
@@ -77,12 +133,23 @@ async function run(): Promise<void> {
   try {
     const snapshot = cloneJson(doc.document)
     const filename = snapshot.name.trim() || 'template'
-    if (format.value === 'png')
+    if (format.value === 'png') {
       downloadBlob(await exportPng(snapshot), `${filename}.png`)
-    else if (format.value === 'pdf')
-      downloadBlob(await exportPdf(snapshot), `${filename}.pdf`)
-    else
+    }
+    else if (format.value === 'pdf') {
+      downloadBlob(
+        batchActive.value
+          ? await exportPdfBatch(snapshot, csvRows.value)
+          : await exportPdf(snapshot),
+        `${filename}.pdf`,
+      )
+    }
+    else if (batchActive.value) {
+      await printDocumentBatch(snapshot, csvRows.value)
+    }
+    else {
       await printDocument(snapshot)
+    }
   }
   catch (error) {
     errorText.value = error instanceof Error ? error.message : String(error)
@@ -136,6 +203,42 @@ async function run(): Promise<void> {
                 <span class="pp:mt-0.5 pp:block pp:text-[10px] pp:text-app-text3">{{ t(entry.descKey as never) }}</span>
               </button>
             </div>
+          </div>
+
+          <!-- CSV batch: only offered when the document uses {{variables}} -->
+          <div
+            v-if="usedVariables.length > 0"
+            data-pp-batch-section
+          >
+            <h3 class="pp:mb-2 pp:text-xs pp:font-semibold pp:text-app-text2">
+              {{ t('batch.title') }}
+            </h3>
+            <label class="pp:flex pp:cursor-pointer pp:items-center pp:gap-2 pp:rounded-lg pp:border pp:border-dashed pp:border-app-border2 pp:px-3 pp:py-2 pp:text-xs pp:text-app-text2 pp:hover:border-brand-500">
+              <span class="pp:font-uimono">⇪</span>
+              <span
+                class="pp:min-w-0 pp:truncate"
+                data-pp-batch-file
+              >{{ csvFileName ?? t('batch.choose') }}</span>
+              <span
+                v-if="csvRows.length"
+                class="pp:ml-auto pp:shrink-0 pp:rounded pp:bg-brand-soft pp:px-1.5 pp:py-0.5 pp:font-uimono pp:text-[10px] pp:font-bold pp:text-brand-500"
+                data-pp-batch-count
+              >{{ csvRows.length }} {{ t('batch.rows') }}</span>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                class="pp:hidden"
+                data-pp-batch-input
+                @change="onCsvChange"
+              >
+            </label>
+            <p
+              v-if="missingVariables.length"
+              class="pp:mt-1.5 pp:text-[10px] pp:text-amber-600"
+              data-pp-batch-missing
+            >
+              {{ t('batch.missing') }} {{ missingTokens }}
+            </p>
           </div>
 
           <p class="pp:text-[11px] pp:leading-relaxed pp:text-app-text3">

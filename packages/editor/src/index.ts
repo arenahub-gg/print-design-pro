@@ -43,6 +43,11 @@ export type {
 } from './core/schema/elements'
 export { dashPattern, lineArrowGeometry, shapePoints } from './core/shape-paths'
 export type { LineArrowGeometry } from './core/shape-paths'
+export { collectVariables, resolveDocument, substituteVariables, VARIABLE_PATTERN } from './core/variables'
+export { CsvParseError, parseCsv } from './core/csv'
+export type { CsvData } from './core/csv'
+export { exportPdfBatch, MAX_BATCH_ROWS } from './render/export-pdf'
+export { printDocumentBatch } from './render/print-browser'
 export { PAGE_PRESETS, pageSettingsSchema } from './core/schema/page'
 export type { PagePresetKey, PageSettings } from './core/schema/page'
 export { createEmptyTemplate, guideSchema, newId, templateDocumentSchema } from './core/schema/template'
@@ -62,6 +67,7 @@ export {
   renameTemplateCommand,
   reorderElementCommand,
   setPageSettingsCommand,
+  setVariableCommand,
   updateElementsCommand,
 } from './core/commands/element-commands'
 export { HistoryManager, MAX_HISTORY } from './core/commands/history-manager'

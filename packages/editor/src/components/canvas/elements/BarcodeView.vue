@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { BarcodeElement } from '../../../core/schema/elements'
+import { substituteVariables } from '../../../core/variables'
+import { useDocumentStore } from '../../../stores/document-store'
 
 // Editor-side barcode rendering. jsbarcode THROWS on invalid content (bad
 // checksums etc.) - caught and surfaced as an inline error placeholder.
 const props = defineProps<{ element: BarcodeElement }>()
+
+const doc = useDocumentStore()
+// Preview encodes SAMPLE data - the panel input still edits the raw source.
+const content = computed(() => substituteVariables(props.element.content, doc.document.variables))
 
 const dataUrl = ref<string | null>(null)
 const failed = ref(false)
@@ -15,14 +21,14 @@ let generation = 0
 async function regenerate(): Promise<void> {
   const ticket = ++generation
   failed.value = false
-  if (!props.element.content) {
+  if (!content.value) {
     dataUrl.value = null
     return
   }
   try {
     const { default: JsBarcode } = await import('jsbarcode')
     const canvas = document.createElement('canvas')
-    JsBarcode(canvas, props.element.content, {
+    JsBarcode(canvas, content.value, {
       format: props.element.format,
       displayValue: props.element.showText,
       lineColor: props.element.lineColor,
@@ -41,7 +47,7 @@ async function regenerate(): Promise<void> {
 }
 
 watch(
-  () => [props.element.content, props.element.format, props.element.showText, props.element.lineColor],
+  () => [content.value, props.element.format, props.element.showText, props.element.lineColor],
   () => {
     if (timer)
       clearTimeout(timer)

@@ -138,6 +138,21 @@ export function setPageSettingsCommand(store: DocumentStore, settings: PageSetti
   }
 }
 
+/** Set one `{{variable}}` sample value (undo restores prior value/absence). */
+export function setVariableCommand(store: DocumentStore, name: string, value: string): Command {
+  let before: string | null = null
+  return {
+    label: 'Edit variable',
+    execute: () => {
+      before = Object.hasOwn(store.document.variables, name)
+        ? store.document.variables[name]!
+        : null
+      store._setVariable(name, value)
+    },
+    undo: () => store._setVariable(name, before),
+  }
+}
+
 export function addGuideCommand(store: DocumentStore, guide: Guide): Command {
   const payload = cloneJson(guide)
   return {

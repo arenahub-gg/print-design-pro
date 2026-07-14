@@ -22,6 +22,12 @@ export const templateDocumentSchema = z.object({
   page: pageSettingsSchema,
   elements: z.array(elementSchema),
   guides: z.array(guideSchema),
+  /**
+   * Sample values for `{{variable}}` placeholders (round 13) - used for the
+   * editor preview and single exports; CSV batch rows override them.
+   * `.default({})` migrates pre-round-13 documents via openTemplate's parse.
+   */
+  variables: z.record(z.string(), z.string()).default({}),
 }).superRefine((doc, ctx) => {
   // Import is the trust boundary: duplicate ids would make id-based commands
   // (update/remove) silently operate on the wrong object.
@@ -53,5 +59,6 @@ export function createEmptyTemplate(
     page: { ...page },
     elements: [],
     guides: [],
+    variables: {},
   }
 }

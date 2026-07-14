@@ -5,6 +5,8 @@ import type { TableElement } from '../../../core/schema/elements'
 import { computeTableLayout, type TableRowLayout } from '../../../core/table-layout'
 import { createTableMeasurer } from '../../../core/table-measurer'
 import { mmToPx } from '../../../core/units'
+import { substituteVariables } from '../../../core/variables'
+import { useDocumentStore } from '../../../stores/document-store'
 import { TEXT_FONT_STACK } from '../../../render/text-layout'
 
 // DOM table renderer. Cells are ABSOLUTELY positioned from computeTableLayout
@@ -13,9 +15,22 @@ import { TEXT_FONT_STACK } from '../../../render/text-layout'
 const props = defineProps<{ element: TableElement }>()
 
 const { t } = useEditorI18n()
+const doc = useDocumentStore()
+
+// Layout runs on SUBSTITUTED sample data - wrapped line counts must match
+// what the print engine (which renders a resolved document) will produce.
+const substituted = computed<TableElement>(() => ({
+  ...props.element,
+  columns: props.element.columns.map(column => ({
+    ...column,
+    title: substituteVariables(column.title, doc.document.variables),
+  })),
+  rows: props.element.rows.map(row =>
+    row.map(cell => substituteVariables(cell, doc.document.variables))),
+}))
 
 const layout = computed(() =>
-  computeTableLayout(props.element, createTableMeasurer(props.element.fontSizePt)),
+  computeTableLayout(substituted.value, createTableMeasurer(props.element.fontSizePt)),
 )
 
 const overflowing = computed(() => layout.value.contentHeightMm > props.element.heightMm + 0.05)

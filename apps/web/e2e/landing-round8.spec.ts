@@ -14,16 +14,19 @@ test('landing page renders in English, switches to Vietnamese, CTA opens the wor
     page.locator('a[href="https://github.com/arenahub-gg/print-design-pro"]').first(),
   ).toBeVisible()
 
-  // Locale switcher flips the page to Vietnamese and persists.
-  // Retry the click: the first one can land before hydration attaches
-  // listeners (same dev-server race the other specs guard against).
+  // Locale select flips the page live and persists. Retry the first switch:
+  // it can land before hydration attaches listeners (same dev-server race
+  // the other specs guard against).
+  const localeSelect = page.locator('[data-test-locale-select]')
   await expect(async () => {
-    await page.locator('[data-test-locale-toggle]').click()
+    await localeSelect.selectOption('vi')
     await expect(page.getByRole('heading', { level: 1 }))
       .toContainText('Thiết kế tem nhãn', { timeout: 1500 })
   }).toPass({ timeout: 20_000 })
   expect(await page.evaluate(() => localStorage.getItem('pp-locale'))).toBe('vi')
-  await page.locator('[data-test-locale-toggle]').click()
+  await localeSelect.selectOption('zh')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('设计标签与打印表单')
+  await localeSelect.selectOption('en')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Design labels')
 
   await page.locator('[data-test-hero-cta]').click()

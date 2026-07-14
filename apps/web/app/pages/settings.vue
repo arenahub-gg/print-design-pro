@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AppLocale } from '~/locales/app-messages'
+import { LOCALE_LABELS } from '~/composables/use-app-locale'
 
 // PrintDesignPro Settings: theme + language (the real settings today).
 // Printer/units/shop-profile sections from the design arrive with their
@@ -12,10 +13,9 @@ const THEME_OPTIONS = [
   { value: 'dark' as const, labelKey: 'settings.dark' as const, swatch: '#13161b' },
 ]
 
-const LOCALE_OPTIONS: Array<{ value: AppLocale, label: string }> = [
-  { value: 'en', label: 'English' },
-  { value: 'vi', label: 'Tiếng Việt' },
-]
+const LOCALE_OPTIONS: Array<{ value: AppLocale, label: string }>
+  = (Object.entries(LOCALE_LABELS) as Array<[AppLocale, string]>)
+    .map(([value, label]) => ({ value, label }))
 </script>
 
 <template>

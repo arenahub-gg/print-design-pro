@@ -1,4 +1,7 @@
 import type { TemplateDocument } from '../core/schema/template'
+import { resolveDocument } from '../core/variables'
+import { canvasToPngBlob } from './export-image'
+import { MAX_BATCH_ROWS } from './export-pdf'
 import { renderToCanvas, type RenderOptions } from './render-engine'
 
 // Browser print via a hidden iframe: the render-engine output fills an
@@ -12,9 +15,49 @@ const CLEANUP_FALLBACK_MS = 10 * 60_000
 const LOAD_TIMEOUT_MS = 10_000
 
 export async function printDocument(doc: TemplateDocument, options: RenderOptions = {}): Promise<void> {
-  const canvas = await renderToCanvas(doc, options)
-  const dataUrl = canvas.toDataURL('image/png')
+  const canvas = await renderToCanvas(resolveDocument(doc), options)
+  await printBlobs([await canvasToPngBlob(canvas)], doc)
+}
 
+/**
+ * Batch print: one page per data row in a single print job. Pages render
+ * sequentially (memory) before the dialog opens.
+ */
+export async function printDocumentBatch(
+  doc: TemplateDocument,
+  rows: Array<Record<string, string>>,
+  options: RenderOptions = {},
+): Promise<void> {
+  if (rows.length === 0)
+    throw new Error('Batch print needs at least one data row')
+  if (rows.length > MAX_BATCH_ROWS)
+    throw new Error(`Batch print supports at most ${MAX_BATCH_ROWS} rows`)
+
+  const blobs: Blob[] = []
+  for (const row of rows) {
+    const canvas = await renderToCanvas(resolveDocument(doc, row), options)
+    blobs.push(await canvasToPngBlob(canvas))
+  }
+  await printBlobs(blobs, doc)
+}
+
+/**
+ * Object URLs, NOT data URLs: base64 would inflate every page by ~33% and
+ * the srcdoc string would DUPLICATE the whole payload again - at the 500-row
+ * cap that difference is hundreds of MB. URLs are revoked on cleanup.
+ */
+async function printBlobs(blobs: Blob[], doc: TemplateDocument): Promise<void> {
+  const urls = blobs.map(blob => URL.createObjectURL(blob))
+  try {
+    await printImages(urls, doc)
+  }
+  finally {
+    for (const url of urls)
+      URL.revokeObjectURL(url)
+  }
+}
+
+async function printImages(dataUrls: string[], doc: TemplateDocument): Promise<void> {
   const iframe = document.createElement('iframe')
   iframe.style.position = 'fixed'
   iframe.style.right = '0'
@@ -24,6 +67,7 @@ export async function printDocument(doc: TemplateDocument, options: RenderOption
   iframe.style.border = '0'
   iframe.setAttribute('aria-hidden', 'true')
 
+  // page-break-after on every sheet but the last: one printed page per image.
   iframe.srcdoc = `<!DOCTYPE html>
 <html>
 <head>
@@ -33,9 +77,10 @@ export async function printDocument(doc: TemplateDocument, options: RenderOption
   @page { size: ${doc.page.widthMm}mm ${doc.page.heightMm}mm; margin: 0; }
   html, body { margin: 0; padding: 0; }
   img { display: block; width: ${doc.page.widthMm}mm; height: ${doc.page.heightMm}mm; }
+  img:not(:last-child) { break-after: page; }
 </style>
 </head>
-<body><img src="${dataUrl}"></body>
+<body>${dataUrls.map(url => `<img src="${url}">`).join('')}</body>
 </html>`
 
   await new Promise<void>((resolve, reject) => {

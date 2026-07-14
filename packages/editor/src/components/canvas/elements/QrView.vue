@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { QrElement } from '../../../core/schema/elements'
+import { substituteVariables } from '../../../core/variables'
+import { useDocumentStore } from '../../../stores/document-store'
 
 // Editor-side QR rendering: regenerates a data URL when content/level
 // change (debounced - typing in the properties panel fires per keystroke).
 const props = defineProps<{ element: QrElement }>()
+
+const doc = useDocumentStore()
+// Preview encodes SAMPLE data - the panel textarea still edits the raw source.
+const content = computed(() => substituteVariables(props.element.content, doc.document.variables))
 
 const dataUrl = ref<string | null>(null)
 const failed = ref(false)
@@ -15,13 +21,13 @@ let generation = 0
 async function regenerate(): Promise<void> {
   const ticket = ++generation
   failed.value = false
-  if (!props.element.content) {
+  if (!content.value) {
     dataUrl.value = null
     return
   }
   try {
     const { default: QRCode } = await import('qrcode')
-    const url = await QRCode.toDataURL(props.element.content, {
+    const url = await QRCode.toDataURL(content.value, {
       errorCorrectionLevel: props.element.ecLevel,
       width: 256,
       margin: 0,
@@ -39,7 +45,7 @@ async function regenerate(): Promise<void> {
 }
 
 watch(
-  () => [props.element.content, props.element.ecLevel, props.element.color, props.element.backgroundColor],
+  () => [content.value, props.element.ecLevel, props.element.color, props.element.backgroundColor],
   () => {
     if (timer)
       clearTimeout(timer)

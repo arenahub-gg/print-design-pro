@@ -82,6 +82,15 @@ export const useDocumentStore = defineStore('pp-document', () => {
     document.value.page = { ...settings }
   }
 
+  /** Set or clear (value === null) one variable's sample value. */
+  function _setVariable(name: string, value: string | null): void {
+    assertCommandContext()
+    if (value === null)
+      delete document.value.variables[name]
+    else
+      document.value.variables[name] = value
+  }
+
   function _insertGuide(guide: Guide): void {
     assertCommandContext()
     document.value.guides.push(guide)
@@ -115,6 +124,7 @@ export const useDocumentStore = defineStore('pp-document', () => {
     _updateElement,
     _moveElement,
     _setPage,
+    _setVariable,
     _insertGuide,
     _removeGuide,
     _updateGuide,

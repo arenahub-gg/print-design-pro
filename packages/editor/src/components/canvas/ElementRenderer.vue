@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import type { LineElement, ShapeElement, StrokeStyle, TemplateElement, TableElement } from '../../core/schema/elements'
 import { dashPattern, lineArrowGeometry, shapePoints } from '../../core/shape-paths'
 import { mmToPx } from '../../core/units'
+import { substituteVariables } from '../../core/variables'
+import { useDocumentStore } from '../../stores/document-store'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
 import BarcodeView from './elements/BarcodeView.vue'
@@ -16,6 +18,13 @@ import TableView from './elements/TableView.vue'
 const props = defineProps<{ element: TemplateElement }>()
 
 const interaction = useInteractionStore()
+const doc = useDocumentStore()
+
+/** Text preview shows SAMPLE variable values; the panel edits raw content. */
+const textContent = computed(() =>
+  props.element.type === 'text'
+    ? substituteVariables(props.element.content, doc.document.variables)
+    : '')
 
 /** Schema state + any live gesture preview. */
 const effective = computed(() => interaction.effectiveElement(props.element))
@@ -157,7 +166,7 @@ const shapePolygon = computed(() => {
         color: element.color,
         lineHeight: TEXT_LINE_HEIGHT,
       }"
-    >{{ element.content }}</div>
+    >{{ textContent }}</div>
     <!-- eslint-enable vue/multiline-html-element-content-newline -->
 
     <!-- effective (not element): table re-lays-out live during resize preview -->

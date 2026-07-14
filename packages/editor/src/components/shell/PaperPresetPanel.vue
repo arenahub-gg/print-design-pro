@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { setPageSettingsCommand } from '../../core/commands/element-commands'
 import { PAGE_PRESETS, type PageSettings, samePageSettings } from '../../core/schema/page'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
+import VariablesPanel from './VariablesPanel.vue'
 
-// PrintDesignPro left panel, "Mẫu" tab: paper presets rendered as the
-// design's mini-preview rows. Switching size is an undoable command. The
-// "Biến dữ liệu" tab is a future feature (data binding) - shown disabled.
+// PrintDesignPro left panel: "Paper" tab (preset rows; switching size is an
+// undoable command) and the "Data variables" tab (round 13 - {{name}}
+// sample values for preview and batch printing).
 const emit = defineEmits<{ presetApplied: [] }>()
+
+const activeTab = ref<'paper' | 'variables'>('paper')
 
 const doc = useDocumentStore()
 const history = useHistoryStore()
@@ -50,18 +53,31 @@ function thumbHeight(settings: PageSettings): number {
 <template>
   <div class="pp:flex pp:h-full pp:flex-col pp:bg-app-panel">
     <div class="pp:flex pp:border-b pp:border-app-border pp:px-2">
-      <div class="pp:flex-1 pp:cursor-default pp:border-b-2 pp:border-brand-500 pp:pb-2.5 pp:pt-3 pp:text-center pp:text-xs pp:font-semibold pp:text-brand-500">
-        {{ t('panel.paperTab') }}
-      </div>
-      <div
-        class="pp:flex-1 pp:cursor-not-allowed pp:border-b-2 pp:border-transparent pp:pb-2.5 pp:pt-3 pp:text-center pp:text-xs pp:font-semibold pp:text-app-text3"
-        :title="t('palette.soon')"
+      <button
+        type="button"
+        class="pp:flex-1 pp:cursor-pointer pp:border-b-2 pp:pb-2.5 pp:pt-3 pp:text-center pp:text-xs pp:font-semibold"
+        :class="activeTab === 'paper' ? 'pp:border-brand-500 pp:text-brand-500' : 'pp:border-transparent pp:text-app-text3 pp:hover:text-app-text2'"
+        data-pp-tab-paper
+        @click="activeTab = 'paper'"
       >
-        {{ t('panel.variablesTab') }} · {{ t('palette.soon') }}
-      </div>
+        {{ t('panel.paperTab') }}
+      </button>
+      <button
+        type="button"
+        class="pp:flex-1 pp:cursor-pointer pp:border-b-2 pp:pb-2.5 pp:pt-3 pp:text-center pp:text-xs pp:font-semibold"
+        :class="activeTab === 'variables' ? 'pp:border-brand-500 pp:text-brand-500' : 'pp:border-transparent pp:text-app-text3 pp:hover:text-app-text2'"
+        data-pp-tab-variables
+        @click="activeTab = 'variables'"
+      >
+        {{ t('panel.variablesTab') }}
+      </button>
     </div>
 
-    <div class="pp:flex pp:flex-col pp:gap-2.5 pp:overflow-auto pp:p-3">
+    <VariablesPanel v-if="activeTab === 'variables'" />
+    <div
+      v-else
+      class="pp:flex pp:flex-col pp:gap-2.5 pp:overflow-auto pp:p-3"
+    >
       <button
         v-for="preset in PRESETS"
         :key="preset.key"

@@ -7,6 +7,8 @@
 [![Vue 3](https://img.shields.io/badge/Vue-3.5-42b883)](https://vuejs.org)
 [![Nuxt 4](https://img.shields.io/badge/Nuxt-4-00dc82)](https://nuxt.com)
 
+**[▶ Try the live demo](https://arenahub-gg.github.io/print-design-pro/)** — no install, no account.
+
 *Đọc bản tiếng Việt [bên dưới](#tiếng-việt) ↓*
 
 Design shipping labels, product tags, and delivery notes in millimeters — what you see on screen is exactly what comes out of the printer. Local-first: your designs live in your browser (IndexedDB), no server, no account.
@@ -25,7 +27,8 @@ Design shipping labels, product tags, and delivery notes in millimeters — what
 
 - **mm-precise editor** — rulers, grid, guides, smart snapping, rotate, lock, multi-select; every dimension in millimeters
 - **True WYSIWYG output** — ONE render engine drives the screen, PNG export (300 DPI), PDF (exact page size), and browser print
-- **Full element set** — text, images, QR codes, barcodes (CODE128, EAN13, EAN8, CODE39, ITF14, UPC), data tables, and 14 shape kinds with solid/dashed/dotted strokes and line arrowheads
+- **Full element set** — text (12 selectable fonts), images, QR codes, barcodes (CODE128, EAN13, EAN8, CODE39, ITF14, UPC), data tables, and 14 shape kinds with solid/dashed/dotted strokes and line arrowheads
+- **Productive editing** — copy/cut/paste, z-order controls, align & distribute on rotated bounding boxes, full keyboard map
 - **Reliable undo/redo** — command pattern throughout; every edit is undoable, including page-size and table changes
 - **Data variables + CSV batch printing** — put `{{name}}` tokens in text, QR codes, barcodes or table cells, then upload a CSV to print one page per row (multi-page PDF or a single print job)
 - **Local-first** — templates persist to IndexedDB; export/import JSON to share; nothing leaves your machine

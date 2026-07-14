@@ -41,11 +41,8 @@ jobs:
         env:
           NUXT_APP_BASE_URL: /print-design-pro/
 
-      - name: Add SPA fallback
-        # Pages serves 404.html for unknown paths (e.g. /editor/<id>); the
-        # client router then renders the right page from the real URL.
-        run: cp apps/web/.output/public/index.html apps/web/.output/public/404.html
-
+      # SPA fallback (404.html) is prerendered by Nuxt itself - see the
+      # '/404.html' route rule: an empty client shell, not a copied page.
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/.output/public

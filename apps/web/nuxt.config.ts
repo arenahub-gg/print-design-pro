@@ -27,6 +27,11 @@ export default defineNuxtConfig({
   // Editor is a pure client-side canvas app - SSR/hydration adds only risk there.
   routeRules: {
     '/editor/**': { ssr: false },
+    // Static-hosting SPA fallback (GitHub Pages serves 404.html for unknown
+    // paths like /editor/<id>): an EMPTY client-rendered shell, so the router
+    // renders from the real URL. A copied index.html would carry the landing
+    // page's payload and hydrate to the wrong route.
+    '/404.html': { ssr: false, prerender: true },
   },
 
   compatibilityDate: '2026-07-10',

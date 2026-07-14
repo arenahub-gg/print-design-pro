@@ -44,6 +44,8 @@ export type {
 export { dashPattern, lineArrowGeometry, shapePoints } from './core/shape-paths'
 export type { LineArrowGeometry } from './core/shape-paths'
 export { collectVariables, resolveDocument, substituteVariables, VARIABLE_PATTERN } from './core/variables'
+export { alignPatches, distributePatches } from './core/align'
+export type { AlignMode, PositionPatch } from './core/align'
 export { CsvParseError, parseCsv } from './core/csv'
 export type { CsvData } from './core/csv'
 export { exportPdfBatch, MAX_BATCH_ROWS } from './render/export-pdf'

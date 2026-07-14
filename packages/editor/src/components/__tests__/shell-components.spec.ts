@@ -140,6 +140,37 @@ describe('propertiesPanel', () => {
     expect((doc.getElementById(rect.id) as { fillColor?: string }).fillColor).toBe(rect.fillColor)
   })
 
+  it('arrange buttons reorder through an undoable command', async () => {
+    const { doc, history, selection, wrapper } = setup()
+    const bottom = createRect({ centerXMm: 20, centerYMm: 20 })
+    const top = createRect({ centerXMm: 60, centerYMm: 60 })
+    history.dispatch(addElementCommand(doc, bottom))
+    history.dispatch(addElementCommand(doc, top))
+    selection.select(bottom.id)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-pp-arrange="front"]').trigger('click')
+    expect(doc.elements.map(el => el.id)).toEqual([top.id, bottom.id])
+    history.undo()
+    expect(doc.elements.map(el => el.id)).toEqual([bottom.id, top.id])
+  })
+
+  it('align section appears for multi-selection and dispatches patches', async () => {
+    const { doc, history, selection, wrapper } = setup()
+    const a = createRect({ centerXMm: 20, centerYMm: 20 })
+    const b = createRect({ centerXMm: 80, centerYMm: 60 })
+    history.dispatch(addElementCommand(doc, a))
+    history.dispatch(addElementCommand(doc, b))
+    selection.setSelection([a.id, b.id])
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-pp-align-section]').exists()).toBe(true)
+    await wrapper.find('[data-pp-align="left"]').trigger('click')
+    expect(doc.getElementById(a.id)!.xMm).toBe(doc.getElementById(b.id)!.xMm)
+    history.undo()
+    expect(doc.getElementById(a.id)!.xMm).not.toBe(doc.getElementById(b.id)!.xMm)
+  })
+
   it('stroke style + arrow toggles dispatch undoable commands', async () => {
     const { doc, history, selection, wrapper } = setup()
     const rect = createRect({ centerXMm: 50, centerYMm: 50 })

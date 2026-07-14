@@ -11,15 +11,15 @@
 
 Design shipping labels, product tags, and delivery notes in millimeters — what you see on screen is exactly what comes out of the printer. Local-first: your designs live in your browser (IndexedDB), no server, no account.
 
-![Landing page](./docs/images/landing.png)
+![Landing page](./.github/assets/landing.png)
 
 ## Demo
 
 | Light | Dark |
 | --- | --- |
-| ![Editor light mode](./docs/images/editor-light.png) | ![Editor dark mode](./docs/images/editor-dark.png) |
+| ![Editor light mode](./.github/assets/editor-light.png) | ![Editor dark mode](./.github/assets/editor-dark.png) |
 
-![Export dialog with live print preview](./docs/images/export-dialog.png)
+![Export dialog with live print preview](./.github/assets/export-dialog.png)
 
 ## Features
 

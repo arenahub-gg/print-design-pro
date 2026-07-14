@@ -30,3 +30,7 @@ coverage/
 # Playwright and test reports
 test-results/
 playwright-report/
+
+# Internal working folders - kept local, never published
+.claude/
+docs/

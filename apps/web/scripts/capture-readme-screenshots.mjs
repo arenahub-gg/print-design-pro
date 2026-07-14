@@ -4,7 +4,7 @@
 // Captures the README demo screenshots against a running dev server.
 // Usage (from apps/web, with `pnpm dev` or the preview server on :3000):
 //   node scripts/capture-readme-screenshots.mjs
-// Output: <repo>/docs/images/*.png - referenced by the root README.
+// Output: <repo>/.github/assets/*.png - referenced by the root README.
 
 import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -12,7 +12,7 @@ import { dirname, resolve } from 'node:path'
 import { chromium } from '@playwright/test'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const outDir = resolve(here, '../../../docs/images')
+const outDir = resolve(here, '../../../.github/assets')
 mkdirSync(outDir, { recursive: true })
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000'

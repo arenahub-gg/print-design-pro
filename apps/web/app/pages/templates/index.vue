@@ -6,6 +6,7 @@ const repo = useTemplateRepository()
 const templates = ref<TemplateRecord[]>([])
 const loading = ref(true)
 const toast = useToast()
+const { t } = useAppLocale()
 
 async function refresh(): Promise<void> {
   try {
@@ -13,7 +14,7 @@ async function refresh(): Promise<void> {
   }
   catch (error) {
     toast.add({
-      title: 'Could not load templates',
+      title: t('templates.loadError'),
       description: error instanceof Error ? error.message.slice(0, 200) : 'Storage unavailable',
       color: 'error',
     })
@@ -36,7 +37,7 @@ async function duplicateTemplate(id: string): Promise<void> {
 }
 
 async function renameTemplate(record: TemplateRecord): Promise<void> {
-  const name = window.prompt('Template name', record.name)?.trim()
+  const name = window.prompt(t('templates.namePrompt'), record.name)?.trim()
   if (!name)
     return
   await repo.rename(record.id, name)
@@ -44,10 +45,10 @@ async function renameTemplate(record: TemplateRecord): Promise<void> {
 }
 
 async function removeTemplate(record: TemplateRecord): Promise<void> {
-  if (!window.confirm(`Delete "${record.name}"? This cannot be undone.`))
+  if (!window.confirm(t('templates.deleteConfirm', { name: record.name })))
     return
   await repo.remove(record.id)
-  toast.add({ title: 'Template deleted', color: 'neutral' })
+  toast.add({ title: t('templates.deletedToast'), color: 'neutral' })
   await refresh()
 }
 
@@ -61,18 +62,20 @@ function formatDate(timestamp: number): string {
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold">
-          Thư viện mẫu
+          {{ t('templates.title') }}
         </h1>
         <p class="mt-1 text-[13px] text-app-text2">
-          Lưu cục bộ trong trình duyệt (IndexedDB)
+          {{ t('templates.sub') }}
         </p>
       </div>
+      <!-- aria-label stays "New template" in every locale: stable e2e handle -->
       <UButton
         icon="i-lucide-plus"
         size="lg"
+        aria-label="New template"
         @click="createTemplate"
       >
-        New template
+        {{ t('templates.new') }}
       </UButton>
     </div>
 
@@ -80,14 +83,14 @@ function formatDate(timestamp: number): string {
       v-if="loading"
       class="py-20 text-center text-muted"
     >
-      Loading…
+      {{ t('templates.loading') }}
     </div>
 
     <div
       v-else-if="templates.length === 0"
       class="rounded-xl border border-dashed border-default py-20 text-center text-muted"
     >
-      No templates yet — create your first one.
+      {{ t('templates.empty') }}
     </div>
 
     <div
@@ -107,7 +110,7 @@ function formatDate(timestamp: number): string {
             </p>
             <p class="mt-1 text-xs text-muted">
               {{ record.doc.page.widthMm }}×{{ record.doc.page.heightMm }}mm ·
-              {{ record.doc.elements.length }} elements
+              {{ record.doc.elements.length }} {{ t('templates.elements') }}
             </p>
             <p class="mt-1 text-xs text-dimmed">
               {{ formatDate(record.updatedAt) }}
@@ -115,9 +118,9 @@ function formatDate(timestamp: number): string {
           </div>
           <UDropdownMenu
             :items="[
-              { label: 'Rename', icon: 'i-lucide-pencil', onSelect: () => renameTemplate(record) },
-              { label: 'Duplicate', icon: 'i-lucide-copy', onSelect: () => duplicateTemplate(record.id) },
-              { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => removeTemplate(record) },
+              { label: t('templates.rename'), icon: 'i-lucide-pencil', onSelect: () => renameTemplate(record) },
+              { label: t('templates.duplicate'), icon: 'i-lucide-copy', onSelect: () => duplicateTemplate(record.id) },
+              { label: t('templates.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => removeTemplate(record) },
             ]"
           >
             <UButton

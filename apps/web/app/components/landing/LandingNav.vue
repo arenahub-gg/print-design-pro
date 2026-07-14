@@ -1,11 +1,12 @@
 <script setup lang="ts">
-// Landing top nav: logo, anchor links, theme toggle, app CTA.
+// Landing top nav: logo, anchor links, locale + theme toggles, app CTA.
 const { theme, toggle } = useAppTheme()
+const { locale, toggle: toggleLocale, t } = useAppLocale()
 </script>
 
 <template>
   <header class="sticky top-0 z-20 border-b border-app-border bg-app-panel/90 backdrop-blur">
-    <nav class="mx-auto flex h-16 max-w-[1120px] items-center gap-6 px-6">
+    <nav class="mx-auto flex h-16 max-w-[1120px] items-center gap-5 px-6">
       <NuxtLink
         to="/"
         class="flex items-center gap-2.5"
@@ -19,11 +20,11 @@ const { theme, toggle } = useAppTheme()
       <a
         href="#features"
         class="hidden text-[13px] font-medium text-app-text2 hover:text-app-text sm:block"
-      >Tính năng</a>
+      >{{ t('landing.features') }}</a>
       <a
         href="#opensource"
         class="hidden text-[13px] font-medium text-app-text2 hover:text-app-text sm:block"
-      >Mã nguồn mở</a>
+      >{{ t('landing.openSource') }}</a>
       <a
         href="https://github.com/arenahub-gg/print-design-pro"
         target="_blank"
@@ -33,8 +34,16 @@ const { theme, toggle } = useAppTheme()
 
       <button
         type="button"
+        class="flex h-9 items-center rounded-lg border border-app-border px-2.5 font-uimono text-[11px] font-semibold text-app-text2 hover:bg-app-inset"
+        data-test-locale-toggle
+        @click="toggleLocale"
+      >
+        {{ locale === 'en' ? 'VI' : 'EN' }}
+      </button>
+
+      <button
+        type="button"
         class="flex h-9 w-9 items-center justify-center rounded-lg border border-app-border text-app-text2 hover:bg-app-inset"
-        :title="theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'"
         @click="toggle"
       >
         {{ theme === 'dark' ? '☀' : '☾' }}
@@ -45,7 +54,7 @@ const { theme, toggle } = useAppTheme()
         class="flex h-9 items-center rounded-lg bg-accent-500 px-4 text-[13px] font-semibold text-white hover:bg-accent-600"
         data-test-open-app
       >
-        Mở ứng dụng
+        {{ t('landing.openApp') }}
       </NuxtLink>
     </nav>
   </header>

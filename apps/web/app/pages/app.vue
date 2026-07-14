@@ -5,6 +5,7 @@ import type { TemplateRecord } from '~/composables/use-template-repository'
 
 // PrintDesignPro Home: quick-start paper sizes + recent designs (IndexedDB).
 const repo = useTemplateRepository()
+const { t } = useAppLocale()
 const recents = ref<TemplateRecord[]>([])
 const search = ref('')
 
@@ -20,7 +21,7 @@ const filteredRecents = computed(() => {
 })
 
 interface QuickSize {
-  name: string
+  nameKey: 'paper.a4' | 'paper.a5' | 'paper.shipping' | 'paper.product'
   settings: PageSettings
   /** Thumb proportions (px). */
   iw: number
@@ -28,14 +29,15 @@ interface QuickSize {
 }
 
 const QUICK: QuickSize[] = [
-  { name: 'Khổ A4', settings: PAGE_PRESETS.a4, iw: 26, ih: 36 },
-  { name: 'Khổ A5', settings: PAGE_PRESETS.a5, iw: 24, ih: 34 },
-  { name: 'Tem vận chuyển', settings: PAGE_PRESETS.label100x150, iw: 26, ih: 38 },
-  { name: 'Tem sản phẩm', settings: PAGE_PRESETS.label50x30, iw: 36, ih: 22 },
+  { nameKey: 'paper.a4', settings: PAGE_PRESETS.a4, iw: 26, ih: 36 },
+  { nameKey: 'paper.a5', settings: PAGE_PRESETS.a5, iw: 24, ih: 34 },
+  { nameKey: 'paper.shipping', settings: PAGE_PRESETS.label100x150, iw: 26, ih: 38 },
+  { nameKey: 'paper.product', settings: PAGE_PRESETS.label50x30, iw: 36, ih: 22 },
 ]
 
 async function createFrom(quick: QuickSize): Promise<void> {
-  const doc = createEmptyTemplate(quick.name, quick.settings)
+  // The localized preset name becomes the template's initial name.
+  const doc = createEmptyTemplate(t(quick.nameKey), quick.settings)
   const record = await repo.save(doc)
   await navigateTo(`/editor/${record.id}`)
 }
@@ -43,11 +45,11 @@ async function createFrom(quick: QuickSize): Promise<void> {
 function relativeTime(timestamp: number): string {
   const minutes = Math.round((Date.now() - timestamp) / 60_000)
   if (minutes < 60)
-    return `${Math.max(1, minutes)} phút trước`
+    return `${Math.max(1, minutes)} ${t('home.minutesAgo')}`
   const hours = Math.round(minutes / 60)
   if (hours < 24)
-    return `${hours} giờ trước`
-  return `${Math.round(hours / 24)} ngày trước`
+    return `${hours} ${t('home.hoursAgo')}`
+  return `${Math.round(hours / 24)} ${t('home.daysAgo')}`
 }
 </script>
 
@@ -56,29 +58,29 @@ function relativeTime(timestamp: number): string {
     <div class="mb-7 flex items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold">
-          Chào mừng trở lại
+          {{ t('home.welcome') }}
         </h1>
         <p class="mt-1 text-[13px] text-app-text2">
-          Tiếp tục thiết kế hoặc bắt đầu từ khổ giấy có sẵn
+          {{ t('home.welcomeSub') }}
         </p>
       </div>
       <input
         v-model="search"
-        placeholder="Tìm thiết kế…"
+        :placeholder="t('home.search')"
         class="h-[38px] w-[260px] rounded-lg border border-app-border2 bg-app-panel px-3 text-[13px] text-app-text focus:outline-accent-500"
       >
     </div>
 
     <h2 class="mb-3 text-[13px] font-semibold text-app-text2">
-      Bắt đầu nhanh
+      {{ t('home.quickStart') }}
     </h2>
     <div class="mb-9 grid grid-cols-2 gap-3 lg:grid-cols-4">
       <button
         v-for="quick in QUICK"
-        :key="quick.name"
+        :key="quick.nameKey"
         type="button"
         class="flex cursor-pointer items-center gap-3 rounded-[10px] border border-app-border bg-app-panel p-4 text-left hover:border-accent-500 hover:shadow-sm"
-        :data-test-quick="quick.name"
+        :data-test-quick="quick.nameKey"
         @click="createFrom(quick)"
       >
         <span
@@ -86,7 +88,7 @@ function relativeTime(timestamp: number): string {
           :style="{ width: `${quick.iw}px`, height: `${quick.ih}px` }"
         />
         <span>
-          <span class="block text-[13px] font-semibold">{{ quick.name }}</span>
+          <span class="block text-[13px] font-semibold">{{ t(quick.nameKey) }}</span>
           <span class="block font-uimono text-[11px] text-app-text3">{{ quick.settings.widthMm }} × {{ quick.settings.heightMm }} mm</span>
         </span>
       </button>
@@ -94,13 +96,13 @@ function relativeTime(timestamp: number): string {
 
     <div class="mb-3 flex items-center justify-between">
       <h2 class="text-[13px] font-semibold text-app-text2">
-        Thiết kế gần đây
+        {{ t('home.recents') }}
       </h2>
       <NuxtLink
         to="/templates"
         class="text-[13px] text-accent-500 hover:underline"
       >
-        Xem tất cả →
+        {{ t('home.viewAll') }}
       </NuxtLink>
     </div>
 
@@ -108,7 +110,7 @@ function relativeTime(timestamp: number): string {
       v-if="filteredRecents.length === 0"
       class="rounded-xl border border-dashed border-app-border2 py-14 text-center text-[13px] text-app-text3"
     >
-      Chưa có thiết kế nào — bắt đầu với một khổ giấy phía trên.
+      {{ t('home.empty') }}
     </p>
     <div
       v-else

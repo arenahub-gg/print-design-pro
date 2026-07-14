@@ -3,12 +3,13 @@
 // dashboard lives at /app; this route opts out of the sidebar shell.
 definePageMeta({ layout: false })
 
+// SEO renders server-side with the English default locale.
 useSeoMeta({
-  title: 'PrintDesignPro — Thiết kế tem nhãn & phiếu in mã nguồn mở',
+  title: 'PrintDesignPro — Open-source label & print form designer',
   description:
-    'Trình thiết kế bản in WYSIWYG mã nguồn mở (MIT): tem vận chuyển, nhãn sản phẩm, '
-    + 'mã QR, mã vạch, bảng dữ liệu. Xuất PNG 300 DPI, PDF đúng khổ giấy. '
-    + 'Local-first — dữ liệu nằm trong máy bạn.',
+    'Open-source (MIT) WYSIWYG print designer: shipping labels, product tags, '
+    + 'QR codes, barcodes, data tables. Export 300 DPI PNG or exact-size PDF. '
+    + 'Local-first — your data stays on your machine.',
 })
 </script>
 

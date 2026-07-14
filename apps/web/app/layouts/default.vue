@@ -5,8 +5,9 @@ const route = useRoute()
 const repo = useTemplateRepository()
 const { theme, toggle } = useAppTheme()
 
+// '/' is the public landing page; the workspace home lives at /app.
 const NAV = [
-  { to: '/', glyph: '⌂', label: 'Trang chủ' },
+  { to: '/app', glyph: '⌂', label: 'Trang chủ' },
   { to: '/templates', glyph: '▤', label: 'Thư viện mẫu' },
   { to: '/settings', glyph: '⚙', label: 'Cài đặt' },
 ]

@@ -1,7 +1,10 @@
 <script setup lang="ts">
-// Landing top nav: logo, anchor links, locale + theme toggles, app CTA.
+import type { AppLocale } from '~/locales/app-messages'
+import { LOCALE_LABELS } from '~/composables/use-app-locale'
+
+// Landing top nav: logo, anchor links, locale select + theme toggle, app CTA.
 const { theme, toggle } = useAppTheme()
-const { locale, toggle: toggleLocale, t } = useAppLocale()
+const { locale, locales, setLocale, t } = useAppLocale()
 </script>
 
 <template>
@@ -32,14 +35,20 @@ const { locale, toggle: toggleLocale, t } = useAppLocale()
         class="hidden text-[13px] font-medium text-app-text2 hover:text-app-text sm:block"
       >GitHub</a>
 
-      <button
-        type="button"
-        class="flex h-9 items-center rounded-lg border border-app-border px-2.5 font-uimono text-[11px] font-semibold text-app-text2 hover:bg-app-inset"
-        data-test-locale-toggle
-        @click="toggleLocale"
+      <select
+        :value="locale"
+        class="h-9 cursor-pointer rounded-lg border border-app-border bg-app-panel px-2 font-uimono text-[11px] font-semibold text-app-text2 hover:bg-app-inset focus:outline-none"
+        data-test-locale-select
+        @change="setLocale(($event.target as HTMLSelectElement).value as AppLocale)"
       >
-        {{ locale === 'en' ? 'VI' : 'EN' }}
-      </button>
+        <option
+          v-for="code in locales"
+          :key="code"
+          :value="code"
+        >
+          {{ LOCALE_LABELS[code] }}
+        </option>
+      </select>
 
       <button
         type="button"

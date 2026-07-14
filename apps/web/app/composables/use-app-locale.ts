@@ -23,9 +23,8 @@ export function useAppLocale() {
     }
   }
 
-  function toggle(): void {
-    setLocale(locale.value === 'en' ? 'vi' : 'en')
-  }
+  /** All locales in display order - drives every language picker. */
+  const locales = Object.keys(appMessages) as AppLocale[]
 
   /** Translate with `{placeholder}` interpolation; falls back to English. */
   function t(key: AppMessageKey, params?: Record<string, string>): string {
@@ -37,15 +36,22 @@ export function useAppLocale() {
     return text
   }
 
-  return { locale: readonly(locale), setLocale, toggle, t }
+  return { locale: readonly(locale), locales, setLocale, t }
 }
 
 export function readStoredLocale(): AppLocale | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    return stored === 'en' || stored === 'vi' ? stored : null
+    return stored && stored in appMessages ? (stored as AppLocale) : null
   }
   catch {
     return null
   }
+}
+
+/** Native names for pickers - a language is always shown in itself. */
+export const LOCALE_LABELS: Record<AppLocale, string> = {
+  en: 'English',
+  vi: 'Tiếng Việt',
+  zh: '中文',
 }

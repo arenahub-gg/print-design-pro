@@ -4,7 +4,9 @@ import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { ImageTooLargeError, pickImageFile, readImage } from '../../composables/use-image-picker'
 import { cloneJson } from '../../core/clone'
 import { addElementCommand, removeElementsCommand, updateElementsCommand } from '../../core/commands/element-commands'
+import { alignPatches, distributePatches, type AlignMode } from '../../core/align'
 import { newId } from '../../core/schema/template'
+import { reorderElementCommand } from '../../core/commands/element-commands'
 import {
   BARCODE_FORMATS,
   type BarcodeElement,
@@ -216,6 +218,47 @@ const colorProps = computed<ColorProp[]>(() => {
   }
 })
 
+// ---- z-order (single selection; array order IS paint order) -----------
+const singleIndex = computed(() => (single.value ? doc.getElementIndex(single.value.id) : -1))
+
+function reorder(toIndex: number): void {
+  const el = single.value
+  if (!el || el.locked || toIndex < 0 || toIndex >= doc.elements.length || toIndex === singleIndex.value)
+    return
+  history.dispatch(reorderElementCommand(doc, el.id, toIndex))
+}
+
+const ARRANGE = [
+  { key: 'back', glyph: '⤓', target: () => 0 },
+  { key: 'backward', glyph: '↓', target: () => singleIndex.value - 1 },
+  { key: 'forward', glyph: '↑', target: () => singleIndex.value + 1 },
+  { key: 'front', glyph: '⤒', target: () => doc.elements.length - 1 },
+] as const
+
+// ---- align / distribute (multi selection, rotated-AABB based) ----------
+const unlockedSelected = computed(() => selected.value.filter(el => !el.locked))
+
+function applyAlign(mode: AlignMode): void {
+  const patches = alignPatches(unlockedSelected.value, mode)
+  if (patches.length > 0)
+    history.dispatch(updateElementsCommand(doc, patches, 'Align elements'))
+}
+
+function applyDistribute(axis: 'horizontal' | 'vertical'): void {
+  const patches = distributePatches(unlockedSelected.value, axis)
+  if (patches.length > 0)
+    history.dispatch(updateElementsCommand(doc, patches, 'Distribute elements'))
+}
+
+const ALIGN_MODES: Array<{ mode: AlignMode, glyph: string }> = [
+  { mode: 'left', glyph: '⇤' },
+  { mode: 'centerH', glyph: '⇹' },
+  { mode: 'right', glyph: '⇥' },
+  { mode: 'top', glyph: '⤒' },
+  { mode: 'middle', glyph: '⇳' },
+  { mode: 'bottom', glyph: '⤓' },
+]
+
 const STROKE_STYLES: Array<{ value: StrokeStyle, labelKey: `stroke.${string}` }> = [
   { value: 'solid', labelKey: 'stroke.solid' },
   { value: 'dashed', labelKey: 'stroke.dashed' },
@@ -336,6 +379,76 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           >
           {{ t('panel.locked') }}
         </label>
+      </section>
+
+      <!-- z-order: single selection -->
+      <section
+        v-if="single"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-arrange-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
+          {{ t('panel.arrange') }}
+        </h3>
+        <div class="pp:flex pp:gap-1">
+          <button
+            v-for="action in ARRANGE"
+            :key="action.key"
+            type="button"
+            class="pp:flex-1 pp:rounded-md pp:border pp:border-app-border2 pp:py-1 pp:text-[13px] pp:text-app-text2 pp:hover:bg-app-inset pp:disabled:opacity-40"
+            :title="t(`arrange.${action.key}` as never)"
+            :disabled="single.locked || action.target() === singleIndex || action.target() < 0 || action.target() >= doc.elements.length"
+            :data-pp-arrange="action.key"
+            @click="reorder(action.target())"
+          >
+            {{ action.glyph }}
+          </button>
+        </div>
+      </section>
+
+      <!-- align/distribute: multi selection -->
+      <section
+        v-if="unlockedSelected.length >= 2"
+        class="pp:flex pp:flex-col pp:gap-2"
+        data-pp-align-section
+      >
+        <h3 class="pp:text-[11px] pp:font-semibold pp:text-app-text3">
+          {{ t('panel.align') }}
+        </h3>
+        <div class="pp:grid pp:grid-cols-6 pp:gap-1">
+          <button
+            v-for="entry in ALIGN_MODES"
+            :key="entry.mode"
+            type="button"
+            class="pp:rounded-md pp:border pp:border-app-border2 pp:py-1 pp:text-[13px] pp:text-app-text2 pp:hover:bg-app-inset"
+            :title="t(`align.${entry.mode}` as never)"
+            :data-pp-align="entry.mode"
+            @click="applyAlign(entry.mode)"
+          >
+            {{ entry.glyph }}
+          </button>
+        </div>
+        <div
+          v-if="unlockedSelected.length >= 3"
+          class="pp:flex pp:gap-1"
+        >
+          <button
+            type="button"
+            class="pp:flex-1 pp:rounded-md pp:border pp:border-app-border2 pp:py-1 pp:text-[11px] pp:text-app-text2 pp:hover:bg-app-inset"
+            data-pp-distribute="horizontal"
+            @click="applyDistribute('horizontal')"
+          >
+            {{ t('align.distributeH') }}
+          </button>
+          <button
+            type="button"
+            class="pp:flex-1 pp:rounded-md pp:border pp:border-app-border2 pp:py-1 pp:text-[11px] pp:text-app-text2 pp:hover:bg-app-inset"
+            data-pp-distribute="vertical"
+            @click="applyDistribute('vertical')"
+          >
+            {{ t('align.distributeV') }}
+          </button>
+        </div>
       </section>
 
       <section

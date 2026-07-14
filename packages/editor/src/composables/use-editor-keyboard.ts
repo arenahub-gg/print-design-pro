@@ -5,6 +5,7 @@ import {
   updateElementsCommand,
 } from '../core/commands/element-commands'
 import { cloneJson } from '../core/clone'
+import { clipboardHasElements, copyElements, pasteElements } from '../core/element-clipboard'
 import type { ElementPatch } from '../core/schema/elements'
 import { newId } from '../core/schema/template'
 import { roundMm } from '../core/units'
@@ -29,6 +30,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 /**
  * Canvas keyboard map (scoped to the focused viewport container):
  * arrows nudge 1mm (shift 10mm) - Delete removes - Ctrl+D duplicates -
+ * Ctrl+C/X/V copy/cut/paste (internal clipboard, works across documents) -
  * Ctrl+A selects all unlocked - Ctrl+Z/Y (or Ctrl+Shift+Z) undo/redo -
  * Escape clears selection. Editable children are never intercepted.
  */
@@ -130,6 +132,30 @@ export function useEditorKeyboard(
     selection.setSelection(clones.map(clone => clone.id))
   }
 
+  function copySelected(): void {
+    const elements = [...selection.selectedIds]
+      .map(id => doc.getElementById(id))
+      .filter((element): element is NonNullable<typeof element> => element !== undefined)
+    copyElements(elements)
+  }
+
+  function cutSelected(): void {
+    // Copy everything selected, but only unlocked elements leave the canvas.
+    copySelected()
+    removeSelected()
+  }
+
+  function pasteClipboard(): void {
+    if (!clipboardHasElements())
+      return
+    const clones = pasteElements()
+    history.transact(clones.length === 1 ? 'Paste element' : `Paste ${clones.length} elements`, () => {
+      for (const clone of clones)
+        history.dispatch(addElementCommand(doc, clone))
+    })
+    selection.setSelection(clones.map(clone => clone.id))
+  }
+
   function selectAll(): void {
     selection.setSelection(
       doc.elements.filter(el => el.visible && !el.locked).map(el => el.id),
@@ -160,6 +186,9 @@ export function useEditorKeyboard(
       return
     switch (event.key.toLowerCase()) {
       case 'd': return handled(event, duplicateSelected)
+      case 'c': return handled(event, copySelected)
+      case 'x': return handled(event, cutSelected)
+      case 'v': return handled(event, pasteClipboard)
       case 'a': return handled(event, selectAll)
       case 'z': return handled(event, () => (event.shiftKey ? history.redo() : history.undo()))
       case 'y': return handled(event, () => history.redo())

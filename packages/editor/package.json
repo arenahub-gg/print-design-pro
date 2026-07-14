@@ -4,6 +4,28 @@
   "description": "Embeddable visual print designer for Vue 3 - labels, receipts, forms",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arenahub-gg/print-design-pro.git",
+    "directory": "packages/editor"
+  },
+  "homepage": "https://github.com/arenahub-gg/print-design-pro#readme",
+  "bugs": "https://github.com/arenahub-gg/print-design-pro/issues",
+  "keywords": [
+    "vue",
+    "vue3",
+    "print",
+    "label",
+    "barcode",
+    "qrcode",
+    "wysiwyg",
+    "editor",
+    "pdf",
+    "shipping-label"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/editor.umd.cjs",
   "module": "./dist/editor.js",
   "types": "./dist/index.d.ts",

@@ -1,0 +1,61 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push supersedes a queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        # version comes from the packageManager field in package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build editor library
+        run: pnpm --filter @pro-print/editor build
+
+      - name: Generate static site
+        # Project pages live under /<repo>/ - baseURL rewires router + assets.
+        run: pnpm --filter web exec nuxt generate
+        env:
+          NUXT_APP_BASE_URL: /print-design-pro/
+
+      - name: Add SPA fallback
+        # Pages serves 404.html for unknown paths (e.g. /editor/<id>); the
+        # client router then renders the right page from the real URL.
+        run: cp apps/web/.output/public/index.html apps/web/.output/public/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/.output/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

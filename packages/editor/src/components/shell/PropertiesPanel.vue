@@ -5,6 +5,7 @@ import { ImageTooLargeError, pickImageFile, readImage } from '../../composables/
 import { cloneJson } from '../../core/clone'
 import { addElementCommand, removeElementsCommand, updateElementsCommand } from '../../core/commands/element-commands'
 import { alignPatches, distributePatches, type AlignMode } from '../../core/align'
+import { DOCUMENT_FONTS, ensureFontLoaded } from '../../core/fonts'
 import { newId } from '../../core/schema/template'
 import { reorderElementCommand } from '../../core/commands/element-commands'
 import {
@@ -290,7 +291,13 @@ function commitColor(key: string, value: string): void {
   ))
 }
 
-function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 'fontWeight' | 'align'>>, label: string): void {
+async function commitFontFamily(family: string): Promise<void> {
+  // Load BEFORE committing so the canvas never paints a fallback flash.
+  await ensureFontLoaded(family)
+  commitText({ fontFamily: family }, 'Font family')
+}
+
+function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 'fontWeight' | 'align' | 'fontFamily'>>, label: string): void {
   // Locked elements are read-only everywhere, text props included.
   if (!singleText.value || singleText.value.locked)
     return
@@ -665,6 +672,23 @@ function commitText(patch: Partial<Pick<TextElement, 'content' | 'fontSizePt' | 
           class="pp:w-full pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:p-2 pp:text-xs pp:text-app-text pp:focus:border-brand-500 pp:focus:outline-none"
           @change="commitText({ content: ($event.target as HTMLTextAreaElement).value }, 'Edit text')"
         />
+        <label class="pp:flex pp:items-center pp:gap-2 pp:text-xs pp:text-app-text2">
+          {{ t('panel.font') }}
+          <select
+            :value="singleText.fontFamily"
+            :disabled="singleText.locked"
+            class="pp:min-w-0 pp:flex-1 pp:rounded-lg pp:border pp:border-app-border2 pp:bg-app-panel pp:px-2 pp:py-1 pp:text-xs"
+            data-pp-font-family
+            @change="commitFontFamily(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="">{{ t('panel.fontDefault') }}</option>
+            <option
+              v-for="font in DOCUMENT_FONTS"
+              :key="font.family"
+              :value="font.family"
+            >{{ font.family }}</option>
+          </select>
+        </label>
         <NumberField
           :label="'pt'"
           :model-value="singleText.fontSizePt"

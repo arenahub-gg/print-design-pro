@@ -84,6 +84,8 @@ export const textElementSchema = baseElementSchema.extend({
   fontWeight: z.union([z.literal(400), z.literal(700)]),
   align: z.enum(['left', 'center', 'right']),
   color: z.string(),
+  /** Document font family ('' = default stack); round-15 `.default` migration. */
+  fontFamily: z.string().default(''),
 })
 
 export const imageElementSchema = baseElementSchema.extend({

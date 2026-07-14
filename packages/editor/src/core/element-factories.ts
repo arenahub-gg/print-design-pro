@@ -180,5 +180,6 @@ export function createText(place: PlaceAt, content = 'Text'): TextElement {
     fontWeight: 400,
     align: 'left',
     color: '#0f172a',
+    fontFamily: '',
   }
 }

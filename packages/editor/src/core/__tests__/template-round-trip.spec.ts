@@ -21,6 +21,7 @@ function makeText(): TextElement {
     fontWeight: 700,
     align: 'center',
     color: '#111111',
+    fontFamily: '',
   }
 }
 

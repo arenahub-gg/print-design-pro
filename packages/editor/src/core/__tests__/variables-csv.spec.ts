@@ -126,4 +126,12 @@ describe('schema migration', () => {
     delete legacy.variables
     expect(parseTemplate(legacy).variables).toEqual({})
   })
+
+  it('defaults fontFamily for pre-round-15 text elements', () => {
+    const doc = createEmptyTemplate()
+    doc.elements.push(createText({ centerXMm: 10, centerYMm: 10 }))
+    const legacy = JSON.parse(JSON.stringify(doc)) as { elements: Array<Record<string, unknown>> }
+    delete legacy.elements[0]!.fontFamily
+    expect(parseTemplate(legacy).elements[0]).toMatchObject({ fontFamily: '' })
+  })
 })

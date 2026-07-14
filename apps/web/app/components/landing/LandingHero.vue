@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Hero: value prop + CTAs + a stylized editor mockup built from tokens so it
 // follows light/dark automatically (no screenshot to keep in sync).
+const { t } = useAppLocale()
 </script>
 
 <template>
@@ -8,16 +9,14 @@
     <div>
       <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-app-border bg-app-panel px-3 py-1 font-uimono text-[11px] text-app-text2">
         <span class="inline-block h-1.5 w-1.5 rounded-full bg-app-ok" />
-        Mã nguồn mở · Giấy phép MIT
+        {{ t('hero.badge') }}
       </p>
       <h1 class="text-4xl font-bold leading-tight lg:text-[44px]">
-        Thiết kế tem nhãn &amp; phiếu in
-        <span class="text-accent-500">ngay trên trình duyệt</span>
+        {{ t('hero.title') }}
+        <span class="text-accent-500">{{ t('hero.titleAccent') }}</span>
       </h1>
       <p class="mt-5 max-w-[480px] text-[15px] leading-relaxed text-app-text2">
-        Trình thiết kế bản in WYSIWYG theo đơn vị milimet: kéo thả, canh lề,
-        mã QR, mã vạch, bảng dữ liệu — xuất PNG 300 DPI, PDF đúng khổ giấy
-        hoặc in trực tiếp. Dữ liệu nằm trong máy bạn, không cần tài khoản.
+        {{ t('hero.sub') }}
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <NuxtLink
@@ -25,7 +24,7 @@
           class="flex h-11 items-center rounded-lg bg-accent-500 px-6 text-sm font-semibold text-white hover:bg-accent-600"
           data-test-hero-cta
         >
-          Bắt đầu thiết kế — miễn phí
+          {{ t('hero.ctaStart') }}
         </NuxtLink>
         <a
           href="https://github.com/arenahub-gg/print-design-pro"
@@ -33,11 +32,11 @@
           rel="noopener"
           class="flex h-11 items-center gap-2 rounded-lg border border-app-border2 px-6 text-sm font-semibold text-app-text hover:bg-app-inset"
         >
-          ★ Star trên GitHub
+          {{ t('hero.ctaStar') }}
         </a>
       </div>
       <p class="mt-4 font-uimono text-[11px] text-app-text3">
-        Không server · Không đăng ký · Chạy hoàn toàn phía trình duyệt
+        {{ t('hero.trust') }}
       </p>
     </div>
 
@@ -48,18 +47,18 @@
     >
       <div class="flex h-10 items-center gap-2 border-b border-app-border px-3">
         <span class="flex h-5 w-5 items-center justify-center rounded bg-accent-500 text-[10px] font-bold text-white">P</span>
-        <span class="text-[11px] font-semibold">Tem vận chuyển</span>
-        <span class="font-uimono text-[9px] text-app-ok">● Đã lưu tự động</span>
+        <span class="text-[11px] font-semibold">{{ t('mock.docName') }}</span>
+        <span class="font-uimono text-[9px] text-app-ok">● {{ t('mock.autosaved') }}</span>
         <span class="flex-1" />
-        <span class="rounded-md bg-accent-500 px-2.5 py-1 text-[10px] font-semibold text-white">Xuất / In</span>
+        <span class="rounded-md bg-accent-500 px-2.5 py-1 text-[10px] font-semibold text-white">{{ t('mock.export') }}</span>
       </div>
       <div class="flex">
         <div class="hidden w-24 shrink-0 flex-col gap-1.5 border-r border-app-border p-2 sm:flex">
           <span
-            v-for="label in ['Khổ A4', 'Khổ A5', 'Tem 100×150', 'Tem 50×30']"
-            :key="label"
+            v-for="labelKey in (['paper.a4', 'paper.a5', 'paper.shipping', 'paper.product'] as const)"
+            :key="labelKey"
             class="rounded-md border border-app-border px-1.5 py-1.5 text-center font-uimono text-[8px] text-app-text3"
-          >{{ label }}</span>
+          >{{ t(labelKey) }}</span>
         </div>
         <div class="flex flex-1 items-center justify-center bg-app-inset p-6">
           <div class="flex w-[220px] flex-col gap-2 rounded-sm border border-app-border2 bg-white p-3 shadow-md">
@@ -107,8 +106,8 @@
         </div>
       </div>
       <div class="flex h-6 items-center gap-3 border-t border-app-border px-3 font-uimono text-[9px] text-app-text3">
-        <span class="text-app-ok">● Sẵn sàng</span>
-        <span>Tem 100 × 150 mm</span>
+        <span class="text-app-ok">● {{ t('mock.ready') }}</span>
+        <span>{{ t('mock.paper') }}</span>
         <span class="flex-1" />
         <span>Zoom 100%</span>
         <span>mm</span>

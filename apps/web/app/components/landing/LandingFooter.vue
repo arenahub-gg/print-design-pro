@@ -1,18 +1,22 @@
+<script setup lang="ts">
+const { t } = useAppLocale()
+</script>
+
 <template>
   <footer class="border-t border-app-border bg-app-panel">
     <!-- final CTA -->
     <div class="mx-auto max-w-[1120px] px-6 py-14 text-center">
       <h2 class="text-2xl font-bold">
-        Bắt đầu thiết kế trong 10 giây
+        {{ t('footer.ctaHeading') }}
       </h2>
       <p class="mt-2 text-sm text-app-text2">
-        Không cần cài đặt, không cần tài khoản — mở là dùng.
+        {{ t('footer.ctaSub') }}
       </p>
       <NuxtLink
         to="/app"
         class="mt-6 inline-flex h-11 items-center rounded-lg bg-accent-500 px-8 text-sm font-semibold text-white hover:bg-accent-600"
       >
-        Mở ứng dụng
+        {{ t('footer.openApp') }}
       </NuxtLink>
     </div>
     <div class="border-t border-app-border">
@@ -22,7 +26,7 @@
           PrintDesignPro
         </span>
         <span class="flex-1" />
-        <span>Giấy phép MIT</span>
+        <span>{{ t('footer.license') }}</span>
         <a
           href="https://github.com/arenahub-gg/print-design-pro"
           target="_blank"
@@ -34,7 +38,7 @@
           target="_blank"
           rel="noopener"
           class="hover:text-app-text"
-        >Báo lỗi / Góp ý</a>
+        >{{ t('footer.report') }}</a>
       </div>
     </div>
   </footer>

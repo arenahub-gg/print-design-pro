@@ -36,7 +36,11 @@ pro-print-designer/          pnpm workspace (pnpm 11, node >= 20)
     ├── app/pages/           / (public landing, layout: false), /app (dashboard:
     │                        quick sizes + recents), /templates (CRUD grid),
     │                        /settings (theme), /editor/[id] (ssr: false)
-    ├── app/composables/     use-template-repository (IndexedDB via idb), use-app-theme
+    ├── app/composables/     use-template-repository (IndexedDB via idb),
+    │                        use-app-theme, use-app-locale (en default, vi;
+    │                        localStorage 'pp-locale', applied post-hydration
+    │                        via plugins/app-locale.client.ts to avoid SSR
+    │                        mismatch; editor lib follows via :locale prop)
     └── e2e/                 Playwright acceptance smoke
 ```
 

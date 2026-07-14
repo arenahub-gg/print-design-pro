@@ -4,13 +4,14 @@
 const route = useRoute()
 const repo = useTemplateRepository()
 const { theme, toggle } = useAppTheme()
+const { t } = useAppLocale()
 
 // '/' is the public landing page; the workspace home lives at /app.
 const NAV = [
-  { to: '/app', glyph: '⌂', label: 'Trang chủ' },
-  { to: '/templates', glyph: '▤', label: 'Thư viện mẫu' },
-  { to: '/settings', glyph: '⚙', label: 'Cài đặt' },
-]
+  { to: '/app', glyph: '⌂', labelKey: 'nav.home' },
+  { to: '/templates', glyph: '▤', labelKey: 'nav.templates' },
+  { to: '/settings', glyph: '⚙', labelKey: 'nav.settings' },
+] as const
 
 async function createNew(): Promise<void> {
   const record = await repo.create('Thiết kế mới')
@@ -32,7 +33,7 @@ async function createNew(): Promise<void> {
         data-test-new-design
         @click="createNew"
       >
-        + Thiết kế mới
+        {{ t('nav.newDesign') }}
       </button>
 
       <NuxtLink
@@ -45,7 +46,7 @@ async function createNew(): Promise<void> {
           : 'text-app-text2 hover:bg-app-inset'"
       >
         <span class="w-4 text-center font-uimono text-sm">{{ item.glyph }}</span>
-        <span>{{ item.label }}</span>
+        <span>{{ t(item.labelKey) }}</span>
       </NuxtLink>
 
       <div class="flex-1" />
@@ -57,7 +58,7 @@ async function createNew(): Promise<void> {
         @click="toggle"
       >
         <span class="w-4 text-center">{{ theme === 'dark' ? '☀' : '☾' }}</span>
-        <span>{{ theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối' }}</span>
+        <span>{{ theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark') }}</span>
       </button>
     </aside>
 

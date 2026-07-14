@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // Open-source pitch: stack, license, contribution invite.
+const { t } = useAppLocale()
 const STACK = ['Vue 3', 'Nuxt 4', 'TypeScript', 'Tailwind CSS 4', 'Canvas 2D', 'Pinia', 'Vitest', 'Playwright']
 </script>
 
@@ -11,13 +12,10 @@ const STACK = ['Vue 3', 'Nuxt 4', 'TypeScript', 'Tailwind CSS 4', 'Canvas 2D', '
     <div class="grid items-center gap-10 lg:grid-cols-2">
       <div>
         <h2 class="text-3xl font-bold">
-          Mã nguồn mở, giấy phép MIT
+          {{ t('oss.heading') }}
         </h2>
         <p class="mt-4 max-w-[480px] text-sm leading-relaxed text-app-text2">
-          PrintDesignPro được phát triển công khai trên GitHub. Dùng miễn phí
-          cho cả dự án cá nhân lẫn thương mại, tự host trong hạ tầng của bạn,
-          hoặc chỉ nhúng riêng phần editor. Issue, góp ý và pull request luôn
-          được chào đón.
+          {{ t('oss.body') }}
         </p>
         <div class="mt-6 flex flex-wrap gap-2">
           <span
@@ -32,7 +30,7 @@ const STACK = ['Vue 3', 'Nuxt 4', 'TypeScript', 'Tailwind CSS 4', 'Canvas 2D', '
           rel="noopener"
           class="mt-8 inline-flex h-11 items-center gap-2 rounded-lg border border-app-border2 px-6 text-sm font-semibold hover:bg-app-inset"
         >
-          Xem mã nguồn trên GitHub →
+          {{ t('oss.viewSource') }}
         </a>
       </div>
 
@@ -46,7 +44,7 @@ const STACK = ['Vue 3', 'Nuxt 4', 'TypeScript', 'Tailwind CSS 4', 'Canvas 2D', '
         </div>
         <div class="space-y-3 p-5 font-uimono text-[12px] leading-relaxed">
           <p class="text-white/40">
-            # Chạy toàn bộ ứng dụng
+            {{ t('oss.termRunApp') }}
           </p>
           <p class="text-[#7ee2a8]">
             <span class="text-white/40">$</span> git clone github.com/arenahub-gg/print-design-pro
@@ -55,7 +53,7 @@ const STACK = ['Vue 3', 'Nuxt 4', 'TypeScript', 'Tailwind CSS 4', 'Canvas 2D', '
             <span class="text-white/40">$</span> pnpm install && pnpm dev
           </p>
           <p class="pt-2 text-white/40">
-            # Hoặc nhúng editor vào app Vue của bạn
+            {{ t('oss.termEmbed') }}
           </p>
           <p class="text-[#8ab8f8]">
             <span class="text-white/40">$</span> pnpm add @pro-print/editor

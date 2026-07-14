@@ -49,7 +49,22 @@ export const circleElementSchema = baseElementSchema.extend({
   strokeStyle: strokeStyleSchema,
 })
 
-export const SHAPE_KINDS = ['triangle', 'diamond', 'star', 'arrow', 'pentagon', 'hexagon'] as const
+export const SHAPE_KINDS = [
+  'triangle',
+  'rightTriangle',
+  'diamond',
+  'parallelogram',
+  'trapezoid',
+  'pentagon',
+  'hexagon',
+  'octagon',
+  'star',
+  'star4',
+  'star6',
+  'arrow',
+  'chevron',
+  'plus',
+] as const
 
 // Polygon shape family: one element type, `kind` selects the point set
 // (core/shape-paths.ts is the single geometry source for view + print).

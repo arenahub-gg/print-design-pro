@@ -44,11 +44,19 @@ const busy = ref(false)
 // stays at design width. Closes on pick, outside pointerdown, or Escape.
 const SHAPE_GLYPHS: Record<ShapeKind, string> = {
   triangle: '△',
+  rightTriangle: '◺',
   diamond: '◇',
-  star: '☆',
-  arrow: '➔',
+  parallelogram: '▱',
+  trapezoid: '⏢',
   pentagon: '⬠',
   hexagon: '⬡',
+  octagon: '⯃',
+  star: '☆',
+  star4: '✦',
+  star6: '✶',
+  arrow: '➔',
+  chevron: '❯',
+  plus: '✚',
 }
 const shapesOpen = ref(false)
 const shapesRef = ref<HTMLElement | null>(null)
@@ -158,7 +166,7 @@ async function addImage(): Promise<void> {
       </button>
       <div
         v-if="shapesOpen"
-        class="pp:fixed pp:z-30 pp:grid pp:w-[168px] pp:-translate-x-1/2 pp:grid-cols-3 pp:gap-1 pp:rounded-[10px] pp:border pp:border-app-border pp:bg-app-panel pp:p-1.5 pp:shadow-app-lg"
+        class="pp:fixed pp:z-30 pp:grid pp:w-[224px] pp:-translate-x-1/2 pp:grid-cols-4 pp:gap-1 pp:rounded-[10px] pp:border pp:border-app-border pp:bg-app-panel pp:p-1.5 pp:shadow-app-lg"
         :style="menuStyle"
         data-pp-shape-menu
       >

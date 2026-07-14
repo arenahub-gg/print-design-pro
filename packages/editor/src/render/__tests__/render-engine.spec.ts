@@ -23,6 +23,7 @@ function makeMockContext() {
     save: record('save'),
     restore: record('restore'),
     beginPath: record('beginPath'),
+    closePath: record('closePath'),
     roundRect: record('roundRect'),
     rect: record('rect'),
     clip: record('clip'),
@@ -33,10 +34,12 @@ function makeMockContext() {
     lineTo: record('lineTo'),
     ellipse: record('ellipse'),
     fillText: record('fillText'),
+    setLineDash: record('setLineDash'),
     measureText: (text: string) => ({ width: text.length * 2 }), // 2mm/char model
     fillStyle: '',
     strokeStyle: '',
     lineWidth: 0,
+    lineJoin: '',
     font: '',
     textBaseline: '',
     textAlign: '',
@@ -109,6 +112,34 @@ describe('renderToCanvas', () => {
     // first element's center translate comes before second's
     expect(translates[0]!.args[0]).toBeCloseTo(30, 6)
     expect(translates[2]!.args[0]).toBeCloseTo(60, 6)
+  })
+
+  it('applies dash patterns and resets them after each stroke', async () => {
+    const doc = createEmptyTemplate()
+    const rect = createRect({ centerXMm: 50, centerYMm: 40 })
+    rect.strokeStyle = 'dashed' // strokeWidth 0.4 -> pattern [1.6, 0.8]
+    doc.elements.push(rect)
+    await renderToCanvas(doc)
+
+    const dashes = mockCtx.calls.filter(c => c.method === 'setLineDash')
+    expect(dashes.map(c => c.args[0])).toEqual([[1.6, 0.8], []])
+  })
+
+  it('shortens an arrowed line and fills the head after the dashed stroke', async () => {
+    const doc = createEmptyTemplate()
+    const { createLine } = await import('../../core/element-factories')
+    const line = createLine({ centerXMm: 50, centerYMm: 40 }) // 60x4, strokeWidth 0.5
+    line.strokeStyle = 'dotted'
+    line.endCap = 'arrow' // head length = max(0.5*4, 1.5) = 2
+    doc.elements.push(line)
+    await renderToCanvas(doc)
+
+    const lineTo = mockCtx.calls.find(c => c.method === 'lineTo')!
+    expect(lineTo.args[0]).toBe(58) // shaft ends under the head
+    // head triangle: closePath + fill AFTER the stroke, dash already reset
+    const methods = mockCtx.calls.map(c => c.method)
+    expect(methods.indexOf('closePath')).toBeGreaterThan(methods.indexOf('stroke'))
+    expect(mockCtx.calls.filter(c => c.method === 'setLineDash').at(-1)!.args[0]).toEqual([])
   })
 
   it('renders text with wrapping, clipping, and pt->mm font size', async () => {

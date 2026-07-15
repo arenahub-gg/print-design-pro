@@ -150,6 +150,10 @@ export const messages = {
     'datatable.open': '⊞ Open data table',
     'datatable.title': 'Batch data',
     'datatable.empty': 'No rows yet — add one, or upload a CSV in the panel.',
+    'layout.title': 'Sheet layout',
+    'layout.single': '1 per page',
+    'layout.sheetA4': 'Tile onto A4 ({n}/sheet)',
+    'layout.sheets': '{x} sheets',
   },
   vi: {
     'palette.elements': 'Thành phần',
@@ -299,6 +303,10 @@ export const messages = {
     'datatable.open': '⊞ Mở bảng dữ liệu',
     'datatable.title': 'Dữ liệu hàng loạt',
     'datatable.empty': 'Chưa có dòng nào — thêm dòng mới hoặc tải CSV ở panel.',
+    'layout.title': 'Bố cục trang in',
+    'layout.single': '1 mẫu / trang',
+    'layout.sheetA4': 'Gộp lên A4 ({n} mẫu/tờ)',
+    'layout.sheets': '{x} tờ',
   },
   zh: {
     'palette.elements': '元素',
@@ -448,6 +456,10 @@ export const messages = {
     'datatable.open': '⊞ 打开数据表',
     'datatable.title': '批量数据',
     'datatable.empty': '暂无数据行 — 添加一行，或在面板中上传 CSV。',
+    'layout.title': '页面布局',
+    'layout.single': '每页 1 个',
+    'layout.sheetA4': '拼版到 A4（每张 {n} 个）',
+    'layout.sheets': '{x} 张',
   },
 } as const
 

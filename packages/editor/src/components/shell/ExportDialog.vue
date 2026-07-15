@@ -4,10 +4,12 @@ import { useBatchCsv } from '../../composables/use-batch-csv'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { cloneJson } from '../../core/clone'
 import { collectVariables, resolveDocument } from '../../core/variables'
+import { computeSheetLayout } from '../../core/sheet-layout'
 import { downloadBlob } from '../../render/download'
 import { exportPdf, exportPdfBatch } from '../../render/export-pdf'
+import { exportPdfBatchSheet } from '../../render/export-sheet'
 import { exportPng } from '../../render/export-image'
-import { printDocument, printDocumentBatch } from '../../render/print-browser'
+import { printDocument, printDocumentBatch, printDocumentBatchSheet } from '../../render/print-browser'
 import { renderToCanvas } from '../../render/render-engine'
 import { useBatchDataStore } from '../../stores/batch-data-store'
 import { useDocumentStore } from '../../stores/document-store'
@@ -70,6 +72,17 @@ const batchActive = computed(() => batchData.hasRows && format.value !== 'png')
 /** Batch is blocked (CTA disabled) while any row carries invalid barcodes. */
 const batchBlocked = computed(() => batchActive.value && batchData.barcodeFailures.length > 0)
 
+// ---- N-up sheet layout (round 21) --------------------------------------
+type SheetMode = 'single' | 'a4'
+const sheetMode = ref<SheetMode>('single')
+
+/** A4 tiling for THIS label - perSheet 0 disables the option entirely. */
+const a4Layout = computed(() => computeSheetLayout(doc.page.widthMm, doc.page.heightMm))
+const nupAvailable = computed(() => batchActive.value && a4Layout.value.perSheet > 1)
+const nupActive = computed(() => nupAvailable.value && sheetMode.value === 'a4')
+const sheetCount = computed(() =>
+  Math.ceil(batchData.rows.length / Math.max(1, a4Layout.value.perSheet)))
+
 // computed: labels follow runtime locale switches
 const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `export.${string}` }>>(() => [
   { value: 'png', label: 'PNG', descKey: 'export.pngDesc' },
@@ -80,7 +93,8 @@ const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `e
 const ctaLabel = computed(() => {
   if (batchActive.value) {
     const key = format.value === 'pdf' ? 'batch.ctaPdf' : 'batch.ctaPrint'
-    return t(key as never).replace('{n}', String(batchData.rows.length))
+    const pages = nupActive.value ? sheetCount.value : batchData.rows.length
+    return t(key as never).replace('{n}', String(pages))
   }
   if (format.value === 'png')
     return t('export.ctaPng')
@@ -136,12 +150,17 @@ async function run(): Promise<void> {
       downloadBlob(await exportPng(snapshot), `${filename}.png`)
     }
     else if (format.value === 'pdf') {
-      downloadBlob(
-        batchActive.value
-          ? await exportPdfBatch(snapshot, cloneJson(batchData.rows))
-          : await exportPdf(snapshot),
-        `${filename}.pdf`,
-      )
+      let blob: Blob
+      if (nupActive.value)
+        blob = await exportPdfBatchSheet(snapshot, cloneJson(batchData.rows))
+      else if (batchActive.value)
+        blob = await exportPdfBatch(snapshot, cloneJson(batchData.rows))
+      else
+        blob = await exportPdf(snapshot)
+      downloadBlob(blob, `${filename}.pdf`)
+    }
+    else if (nupActive.value) {
+      await printDocumentBatchSheet(snapshot, cloneJson(batchData.rows))
     }
     else if (batchActive.value) {
       await printDocumentBatch(snapshot, cloneJson(batchData.rows))
@@ -246,6 +265,44 @@ async function run(): Promise<void> {
             >
               {{ t('batch.missing') }} {{ missingTokens }}
             </p>
+            <!-- sheet layout: one label per page, or tiled onto A4 -->
+            <div
+              v-if="nupAvailable"
+              class="pp:mt-2"
+              data-pp-sheet-layout
+            >
+              <h4 class="pp:mb-1 pp:text-[10px] pp:font-semibold pp:text-app-text3">
+                {{ t('layout.title') }}
+              </h4>
+              <div class="pp:flex pp:gap-1.5">
+                <button
+                  type="button"
+                  class="pp:flex-1 pp:rounded-md pp:border pp:px-2 pp:py-1 pp:text-[10px]"
+                  :class="sheetMode === 'single' ? 'pp:border-brand-500 pp:bg-brand-soft pp:text-brand-500' : 'pp:border-app-border2 pp:text-app-text2'"
+                  data-pp-layout-single
+                  @click="sheetMode = 'single'"
+                >
+                  {{ t('layout.single') }}
+                </button>
+                <button
+                  type="button"
+                  class="pp:flex-1 pp:rounded-md pp:border pp:px-2 pp:py-1 pp:text-[10px]"
+                  :class="sheetMode === 'a4' ? 'pp:border-brand-500 pp:bg-brand-soft pp:text-brand-500' : 'pp:border-app-border2 pp:text-app-text2'"
+                  data-pp-layout-a4
+                  @click="sheetMode = 'a4'"
+                >
+                  {{ t('layout.sheetA4').replace('{n}', String(a4Layout.perSheet)) }}
+                </button>
+              </div>
+              <p
+                v-if="nupActive"
+                class="pp:mt-1 pp:font-uimono pp:text-[10px] pp:text-app-text3"
+                data-pp-layout-info
+              >
+                {{ a4Layout.columns }}×{{ a4Layout.rowsPerSheet }} · A4 {{ a4Layout.orientation === 'landscape' ? '↔' : '↕' }} · {{ t('layout.sheets').replace('{x}', String(sheetCount)) }}
+              </p>
+            </div>
+
             <div
               v-if="batchData.barcodeFailures.length"
               class="pp:mt-1.5 pp:rounded-lg pp:bg-rose-50 pp:p-2 pp:text-[10px] pp:text-rose-600"

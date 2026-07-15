@@ -111,4 +111,27 @@ test('seeded dynamic-data demo offers a ready-to-fill sample CSV', async ({ page
   const csv = readFileSync((await download.path())!, 'utf8')
   expect(csv).toContain('name,address,phone,tracking,cod')
   expect(csv).toContain('Nguyen Van A')
+
+  // Round 21 N-up: 100x150 labels tile 2-up on landscape A4
+  const batchCsv = 'name,address,phone,tracking,cod\nAn,HN,090,PPA1,10\nBinh,DN,091,PPB2,20\nChau,HCM,092,PPC3,30\n'
+  await page.locator('[data-pp-batch-input]').setInputFiles({
+    name: 'orders.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(batchCsv, 'utf8'),
+  })
+  await expect(page.locator('[data-pp-batch-count]')).toContainText('3')
+  await expect(page.locator('[data-pp-sheet-layout]')).toBeVisible()
+  await page.locator('[data-pp-layout-a4]').click()
+  await expect(page.locator('[data-pp-layout-info]')).toContainText('2×1')
+
+  const sheetDownloadPromise = page.waitForEvent('download')
+  await page.locator('[data-pp-export-run]').click()
+  const sheetDownload = await sheetDownloadPromise
+  const bytes = readFileSync((await sheetDownload.path())!)
+  const pdf = await PDFDocument.load(new Uint8Array(bytes))
+  // 3 labels at 2/sheet -> 2 landscape-A4 sheets
+  expect(pdf.getPageCount()).toBe(2)
+  const { width, height } = pdf.getPage(0).getSize()
+  expect(width).toBeCloseTo(841.89, 0)
+  expect(height).toBeCloseTo(595.28, 0)
 })

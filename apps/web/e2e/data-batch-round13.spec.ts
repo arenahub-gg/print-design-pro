@@ -47,6 +47,17 @@ test('variables render sample values and a CSV batch exports one PDF page per ro
   await page.locator('[data-pp-row-prev]').click()
   await expect(textEl).toContainText('To: Nguyen, An')
 
+  // Round 19 CRUD: edit the active row inline - canvas follows live
+  await page.locator('[data-pp-row-cell="name"]').fill('Edited Person')
+  await expect(textEl).toContainText('To: Edited Person')
+
+  // Add a row (clones the active one, preview jumps to it), then delete it
+  await page.locator('[data-pp-row-editor] [data-pp-row-add]').click()
+  await expect(page.locator('[data-pp-panel-batch-count]')).toContainText('4')
+  await expect(page.locator('[data-pp-row-navigator]')).toContainText('4/4')
+  await page.locator('[data-pp-row-delete]').click()
+  await expect(page.locator('[data-pp-panel-batch-count]')).toContainText('3')
+
   // Export dialog shares the same data - rows are pre-loaded
   await page.locator('[data-pp-export-open]').click()
   await expect(page.locator('[data-pp-batch-section]')).toBeVisible()

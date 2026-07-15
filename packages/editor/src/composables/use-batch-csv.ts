@@ -30,6 +30,13 @@ export function useBatchCsv() {
     batchData.setCsv(headers, rows, file.name)
   }
 
+  /** Re-run the barcode pre-flight - rows are editable in the panel now. */
+  async function revalidate(): Promise<void> {
+    batchData.barcodeFailures = batchData.hasRows
+      ? await validateBatchBarcodes(doc.document, batchData.rows)
+      : []
+  }
+
   /** Ready-to-fill CSV: header = document variables, first row = samples. */
   function downloadSampleCsv(): void {
     const headers = collectVariables(doc.document)
@@ -41,5 +48,5 @@ export function useBatchCsv() {
     downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv' }), 'batch-data.csv')
   }
 
-  return { loadCsvFile, downloadSampleCsv }
+  return { loadCsvFile, downloadSampleCsv, revalidate }
 }

@@ -35,7 +35,7 @@ let previewTicket = 0
 // Data can be loaded HERE or in the Variables panel - same store, so rows
 // uploaded in either place drive both the canvas preview and this dialog.
 const batchData = useBatchDataStore()
-const { loadCsvFile, downloadSampleCsv } = useBatchCsv()
+const { loadCsvFile, downloadSampleCsv, revalidate } = useBatchCsv()
 const usedVariables = computed(() => collectVariables(doc.document))
 
 /** Variables the CSV does not provide - they fall back to sample values. */
@@ -95,6 +95,8 @@ watch(() => props.open, async (open) => {
   previewTicket++
   if (open) {
     errorText.value = null
+    // Rows may have been hand-edited in the panel since the last check.
+    void revalidate()
     void renderPreview(previewTicket)
     await nextTick()
     overlayRef.value?.focus()

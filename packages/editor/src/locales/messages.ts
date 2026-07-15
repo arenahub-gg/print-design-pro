@@ -145,6 +145,8 @@ export const messages = {
     'batch.sampleCsv': '⤓ Download a ready-to-fill sample CSV',
     'batch.previewRow': 'Row {n}/{m}',
     'batch.clear': 'Remove data',
+    'batch.addRow': '+ Add row',
+    'batch.deleteRow': 'Delete row',
   },
   vi: {
     'palette.elements': 'Thành phần',
@@ -289,6 +291,8 @@ export const messages = {
     'batch.sampleCsv': '⤓ Tải CSV mẫu để điền dữ liệu',
     'batch.previewRow': 'Dòng {n}/{m}',
     'batch.clear': 'Xóa dữ liệu',
+    'batch.addRow': '+ Thêm dòng',
+    'batch.deleteRow': 'Xóa dòng',
   },
   zh: {
     'palette.elements': '元素',
@@ -433,6 +437,8 @@ export const messages = {
     'batch.sampleCsv': '⤓ 下载可直接填写的示例 CSV',
     'batch.previewRow': '第 {n}/{m} 行',
     'batch.clear': '移除数据',
+    'batch.addRow': '+ 添加行',
+    'batch.deleteRow': '删除行',
   },
 } as const
 

@@ -142,6 +142,7 @@ export const messages = {
     'panel.font': 'Font',
     'panel.fontDefault': 'Default',
     'batch.badBarcodes': 'Invalid barcode content — fix the CSV before printing:',
+    'batch.sampleCsv': '⤓ Download a ready-to-fill sample CSV',
   },
   vi: {
     'palette.elements': 'Thành phần',
@@ -283,6 +284,7 @@ export const messages = {
     'panel.font': 'Phông chữ',
     'panel.fontDefault': 'Mặc định',
     'batch.badBarcodes': 'Mã vạch không hợp lệ — sửa CSV trước khi in:',
+    'batch.sampleCsv': '⤓ Tải CSV mẫu để điền dữ liệu',
   },
   zh: {
     'palette.elements': '元素',
@@ -424,6 +426,7 @@ export const messages = {
     'panel.font': '字体',
     'panel.fontDefault': '默认',
     'batch.badBarcodes': '条形码内容无效 — 请先修正 CSV 再打印：',
+    'batch.sampleCsv': '⤓ 下载可直接填写的示例 CSV',
   },
 } as const
 

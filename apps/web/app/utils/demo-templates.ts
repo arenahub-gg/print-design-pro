@@ -197,6 +197,56 @@ function eventBadge(): TemplateDocument {
   return doc
 }
 
+/**
+ * Round-17 showcase: a COD shipping label driven by {{variables}} - open it,
+ * check the Data variables tab, then batch-print it from a CSV in Export.
+ */
+export function createBatchDemoTemplate(): TemplateDocument {
+  const doc = createEmptyTemplate('Batch COD label (dynamic data)', PAGE_PRESETS.label100x150)
+  doc.variables = {
+    name: 'Nguyen Van A',
+    address: '456 Le Loi, Da Nang',
+    phone: '0901 234 567',
+    tracking: 'PP123456789VN',
+    cod: '350.000d',
+  }
+
+  const header = at(createRect(CENTER), 2, 2, 96, 14)
+  header.fillColor = '#1f8a5b'
+  header.strokeWidthMm = 0
+  header.cornerRadiusMm = 1.5
+
+  const brand = at(createText(CENTER, 'PRO PRINT · COD'), 6, 5, 70, 8)
+  brand.fontSizePt = 13
+  brand.fontWeight = 700
+  brand.color = '#ffffff'
+
+  const to = at(createText(CENTER, 'To: {{name}}\n{{address}}\n{{phone}}'), 6, 22, 58, 24)
+  to.fontSizePt = 11
+  to.fontWeight = 700
+
+  const qr = at(createQr(CENTER, 'https://propr.int/track/{{tracking}}'), 68, 20, 26, 26)
+
+  const cod = at(createText(CENTER, 'COD: {{cod}}'), 6, 52, 60, 10)
+  cod.fontSizePt = 15
+  cod.fontWeight = 700
+  cod.color = '#dc2626'
+
+  const divider = at(createLine(CENTER), 4, 66, 92, 4)
+  divider.strokeStyle = 'dashed'
+  divider.strokeColor = '#94a3b8'
+
+  // CODE128 accepts any content - safe with arbitrary CSV values.
+  const barcode = at(createBarcode(CENTER, '{{tracking}}'), 10, 76, 80, 24)
+
+  const hint = at(createText(CENTER, 'Export → Batch data (CSV) → one label per row'), 6, 108, 88, 8)
+  hint.fontSizePt = 8
+  hint.color = '#5b6575'
+
+  doc.elements.push(header, brand, to, qr, cod, divider, barcode, hint)
+  return doc
+}
+
 /** Ordering matters: seeded oldest-first so the library lists them nicely. */
 export function createDemoTemplates(): TemplateDocument[] {
   return [eventBadge(), binLabel(), deliveryNote(), priceTag(), shippingLabel()]

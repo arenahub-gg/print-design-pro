@@ -50,3 +50,27 @@ test('variables render sample values and a CSV batch exports one PDF page per ro
   const pdf = await PDFDocument.load(new Uint8Array(bytes))
   expect(pdf.getPageCount()).toBe(3)
 })
+
+test('seeded dynamic-data demo offers a ready-to-fill sample CSV', async ({ page }) => {
+  await page.goto('/templates')
+  // Round-17 seeded demo (fresh browser context = fresh IndexedDB + seed)
+  const card = page.getByText('Batch COD label (dynamic data)', { exact: true })
+  await expect(async () => {
+    await card.click()
+    await page.waitForURL(/\/editor\//, { timeout: 3000 })
+  }).toPass({ timeout: 30_000 })
+  await expect(page.locator('[data-pp-viewport]')).toBeVisible()
+
+  // Tokens render their sample values on canvas
+  await expect(page.locator('[data-pp-element-type="text"]').first()).not.toContainText('{{')
+
+  // Batch section is offered (the demo uses variables); sample CSV downloads
+  await page.locator('[data-pp-export-open]').click()
+  await expect(page.locator('[data-pp-batch-section]')).toBeVisible()
+  const downloadPromise = page.waitForEvent('download')
+  await page.locator('[data-pp-batch-sample]').click()
+  const download = await downloadPromise
+  const csv = readFileSync((await download.path())!, 'utf8')
+  expect(csv).toContain('name,address,phone,tracking,cod')
+  expect(csv).toContain('Nguyen Van A')
+})

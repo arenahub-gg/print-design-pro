@@ -1,7 +1,7 @@
 import type { TemplateDocument } from '@pro-print/editor'
 import { createEmptyTemplate, parseTemplate } from '@pro-print/editor'
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import { createDemoTemplates } from '~/utils/demo-templates'
+import { createBatchDemoTemplate, createDemoTemplates } from '~/utils/demo-templates'
 
 // Local-first template storage (IndexedDB). Server sync is a later round -
 // this module is the only place that knows how templates are persisted.
@@ -38,21 +38,27 @@ function db(): Promise<IDBPDatabase<TemplateDb>> {
 // Memoized promise: every lister awaits the same seed pass, so the first
 // page load can never race a half-seeded store.
 const SEED_FLAG = 'pp-demo-seeded-v1'
+/** Round-17 addition ships to EXISTING users too - its own one-time flag. */
+const SEED_FLAG_V2 = 'pp-demo-seeded-v2'
 let seedPromise: Promise<void> | null = null
 
 function ensureSeeded(save: (doc: TemplateDocument) => Promise<TemplateRecord>): Promise<void> {
   seedPromise ??= (async () => {
     try {
-      if (localStorage.getItem(SEED_FLAG))
-        return
-      const existing = await (await db()).count('templates')
-      if (existing === 0) {
-        // Sequential saves: updatedAt ascends, so the list (newest first)
-        // shows the demos in authored order.
-        for (const doc of createDemoTemplates())
-          await save(doc)
+      if (!localStorage.getItem(SEED_FLAG)) {
+        const existing = await (await db()).count('templates')
+        if (existing === 0) {
+          // Sequential saves: updatedAt ascends, so the list (newest first)
+          // shows the demos in authored order.
+          for (const doc of createDemoTemplates())
+            await save(doc)
+        }
+        localStorage.setItem(SEED_FLAG, '1')
       }
-      localStorage.setItem(SEED_FLAG, '1')
+      if (!localStorage.getItem(SEED_FLAG_V2)) {
+        await save(createBatchDemoTemplate())
+        localStorage.setItem(SEED_FLAG_V2, '1')
+      }
     }
     catch {
       // Seeding is best-effort - storage errors surface on real operations.

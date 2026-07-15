@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CsvParseError, parseCsv } from '../csv'
+import { CsvParseError, parseCsv, serializeCsv } from '../csv'
 import { createBarcode, createQr, createTable, createText } from '../element-factories'
 import { createEmptyTemplate } from '../schema/template'
 import { parseTemplate } from '../schema/validate'
@@ -117,6 +117,19 @@ describe('parseCsv', () => {
     expect(() => parseCsv('a,b\n"oops')).toThrow(CsvParseError)
     expect(() => parseCsv('\n\n')).toThrow('CSV is empty')
     expect(() => parseCsv('a,,c\n1,2,3')).toThrow('empty column name')
+  })
+})
+
+describe('serializeCsv', () => {
+  it('round-trips through parseCsv, quoting only where needed', () => {
+    const headers = ['name', 'note']
+    const rows = [
+      { name: 'Ng, An', note: 'said "hi"\nline2' },
+      { name: 'Binh', note: '' },
+    ]
+    const csv = serializeCsv(headers, rows)
+    expect(csv.startsWith('name,note\r\n"Ng, An"')).toBe(true)
+    expect(parseCsv(csv)).toEqual({ headers, rows })
   })
 })
 

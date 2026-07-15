@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { cloneJson } from '../../core/clone'
-import { CsvParseError, parseCsv } from '../../core/csv'
+import { CsvParseError, parseCsv, serializeCsv } from '../../core/csv'
 import { collectVariables, resolveDocument } from '../../core/variables'
 import { validateBatchBarcodes, type BatchBarcodeFailure } from '../../render/batch-preflight'
 import { downloadBlob } from '../../render/download'
@@ -80,6 +80,20 @@ async function onCsvChange(event: Event): Promise<void> {
     resetCsv()
     errorText.value = error instanceof Error ? error.message : String(error)
   }
+}
+
+/**
+ * Ready-to-fill CSV: header = the document's variables, first row = the
+ * current sample values - open in Excel, add rows, upload back.
+ */
+function downloadSampleCsv(): void {
+  const headers = usedVariables.value
+  const sampleRow = Object.fromEntries(
+    headers.map(name => [name, doc.document.variables[name] ?? '']),
+  )
+  const csv = serializeCsv(headers, [sampleRow])
+  // BOM so Excel opens UTF-8 (Vietnamese/Chinese values) correctly.
+  downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv' }), 'batch-data.csv')
 }
 
 /** Batch applies to PDF and direct print; PNG always exports one sample page. */
@@ -242,6 +256,14 @@ async function run(): Promise<void> {
                 @change="onCsvChange"
               >
             </label>
+            <button
+              type="button"
+              class="pp:mt-1.5 pp:text-[10px] pp:text-brand-500 pp:hover:underline"
+              data-pp-batch-sample
+              @click="downloadSampleCsv"
+            >
+              {{ t('batch.sampleCsv') }}
+            </button>
             <p
               v-if="missingVariables.length"
               class="pp:mt-1.5 pp:text-[10px] pp:text-amber-600"

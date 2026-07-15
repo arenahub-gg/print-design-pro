@@ -9,6 +9,22 @@ export interface CsvData {
 
 export class CsvParseError extends Error {}
 
+/** Quote a cell when it carries CSV syntax; `""` escapes inner quotes. */
+function csvCell(value: string): string {
+  return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
+}
+
+/**
+ * Serialize records to RFC4180 CSV (CRLF, header row first). Counterpart of
+ * parseCsv - used to hand users a ready-to-fill sample file for batch jobs.
+ */
+export function serializeCsv(headers: string[], rows: Array<Record<string, string>>): string {
+  const lines = [headers.map(csvCell).join(',')]
+  for (const row of rows)
+    lines.push(headers.map(header => csvCell(row[header] ?? '')).join(','))
+  return `${lines.join('\r\n')}\r\n`
+}
+
 /** Split CSV text into raw cell matrix (fields may contain \n and commas). */
 function parseCells(text: string): string[][] {
   const lines: string[][] = []

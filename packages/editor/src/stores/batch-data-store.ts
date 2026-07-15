@@ -71,22 +71,34 @@ export const useBatchDataStore = defineStore('pp-batch-data', () => {
     activeRowIndex.value = rows.value.length - 1
   }
 
-  function updateActiveCell(name: string, value: string): void {
-    const row = activeRow.value
+  function updateCell(index: number, name: string, value: string): void {
+    const row = rows.value[index]
     if (!row)
       return
     ensureHeader(name)
     row[name] = value
   }
 
-  function removeActiveRow(): void {
-    if (activeRowIndex.value === null)
+  function updateActiveCell(name: string, value: string): void {
+    if (activeRowIndex.value !== null)
+      updateCell(activeRowIndex.value, name, value)
+  }
+
+  function removeRow(index: number): void {
+    if (index < 0 || index >= rows.value.length)
       return
-    rows.value.splice(activeRowIndex.value, 1)
-    if (rows.value.length === 0)
+    rows.value.splice(index, 1)
+    if (rows.value.length === 0) {
       clear()
-    else
-      activeRowIndex.value = Math.min(activeRowIndex.value, rows.value.length - 1)
+      return
+    }
+    if (activeRowIndex.value !== null && activeRowIndex.value >= index)
+      activeRowIndex.value = Math.max(0, Math.min(activeRowIndex.value - (activeRowIndex.value > index ? 1 : 0), rows.value.length - 1))
+  }
+
+  function removeActiveRow(): void {
+    if (activeRowIndex.value !== null)
+      removeRow(activeRowIndex.value)
   }
 
   return {
@@ -102,7 +114,9 @@ export const useBatchDataStore = defineStore('pp-batch-data', () => {
     clear,
     stepPreview,
     addRow,
+    updateCell,
     updateActiveCell,
+    removeRow,
     removeActiveRow,
   }
 })

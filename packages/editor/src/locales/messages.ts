@@ -147,6 +147,9 @@ export const messages = {
     'batch.clear': 'Remove data',
     'batch.addRow': '+ Add row',
     'batch.deleteRow': 'Delete row',
+    'datatable.open': '⊞ Open data table',
+    'datatable.title': 'Batch data',
+    'datatable.empty': 'No rows yet — add one, or upload a CSV in the panel.',
   },
   vi: {
     'palette.elements': 'Thành phần',
@@ -293,6 +296,9 @@ export const messages = {
     'batch.clear': 'Xóa dữ liệu',
     'batch.addRow': '+ Thêm dòng',
     'batch.deleteRow': 'Xóa dòng',
+    'datatable.open': '⊞ Mở bảng dữ liệu',
+    'datatable.title': 'Dữ liệu hàng loạt',
+    'datatable.empty': 'Chưa có dòng nào — thêm dòng mới hoặc tải CSV ở panel.',
   },
   zh: {
     'palette.elements': '元素',
@@ -439,6 +445,9 @@ export const messages = {
     'batch.clear': '移除数据',
     'batch.addRow': '+ 添加行',
     'batch.deleteRow': '删除行',
+    'datatable.open': '⊞ 打开数据表',
+    'datatable.title': '批量数据',
+    'datatable.empty': '暂无数据行 — 添加一行，或在面板中上传 CSV。',
   },
 } as const
 

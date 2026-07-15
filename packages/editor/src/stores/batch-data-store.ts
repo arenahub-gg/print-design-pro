@@ -56,6 +56,39 @@ export const useBatchDataStore = defineStore('pp-batch-data', () => {
     activeRowIndex.value = next
   }
 
+  // ---- in-editor row CRUD (round 19) -----------------------------------
+  /** Track a manually-introduced column so the export dialog sees it. */
+  function ensureHeader(name: string): void {
+    if (!headers.value.includes(name))
+      headers.value.push(name)
+  }
+
+  /** Append a row (defaults cloned from `base`) and jump the preview to it. */
+  function addRow(base: Record<string, string> = {}): void {
+    for (const name of Object.keys(base))
+      ensureHeader(name)
+    rows.value.push({ ...base })
+    activeRowIndex.value = rows.value.length - 1
+  }
+
+  function updateActiveCell(name: string, value: string): void {
+    const row = activeRow.value
+    if (!row)
+      return
+    ensureHeader(name)
+    row[name] = value
+  }
+
+  function removeActiveRow(): void {
+    if (activeRowIndex.value === null)
+      return
+    rows.value.splice(activeRowIndex.value, 1)
+    if (rows.value.length === 0)
+      clear()
+    else
+      activeRowIndex.value = Math.min(activeRowIndex.value, rows.value.length - 1)
+  }
+
   return {
     rows,
     headers,
@@ -68,6 +101,9 @@ export const useBatchDataStore = defineStore('pp-batch-data', () => {
     setCsv,
     clear,
     stepPreview,
+    addRow,
+    updateActiveCell,
+    removeActiveRow,
   }
 })
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useBatchCsv } from '../../composables/use-batch-csv'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { setVariableCommand } from '../../core/commands/element-commands'
@@ -15,7 +15,7 @@ import { useHistoryStore } from '../../stores/history-store'
 const doc = useDocumentStore()
 const history = useHistoryStore()
 const batchData = useBatchDataStore()
-const { loadCsvFile, downloadSampleCsv } = useBatchCsv()
+const { loadCsvFile, downloadSampleCsv, revalidate } = useBatchCsv()
 const { t } = useEditorI18n()
 
 const names = computed(() => collectVariables(doc.document))
@@ -53,6 +53,27 @@ const rowLabel = computed(() =>
   t('batch.previewRow')
     .replace('{n}', String((batchData.activeRowIndex ?? 0) + 1))
     .replace('{m}', String(batchData.rows.length)))
+
+// ---- in-editor row CRUD -------------------------------------------------
+/** First manual row starts from the sample values (something to edit). */
+function addRow(): void {
+  const base = batchData.activeRow
+    ?? Object.fromEntries(names.value.map(name => [name, doc.document.variables[name] ?? '']))
+  batchData.addRow({ ...base })
+}
+
+// Hand edits can introduce/repair invalid barcode content - revalidate
+// (debounced; jsbarcode generation per row is not free).
+let revalidateTimer: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => batchData.rows,
+  () => {
+    if (revalidateTimer)
+      clearTimeout(revalidateTimer)
+    revalidateTimer = setTimeout(() => void revalidate(), 600)
+  },
+  { deep: true },
+)
 </script>
 
 <template>
@@ -124,7 +145,18 @@ const rowLabel = computed(() =>
           {{ csvError }}
         </p>
 
-        <!-- row navigator: previews each CSV row live on the canvas -->
+        <!-- add first row by hand - no CSV needed -->
+        <button
+          v-if="!batchData.hasRows"
+          type="button"
+          class="pp:mt-2 pp:w-full pp:rounded-lg pp:border pp:border-app-border2 pp:py-1.5 pp:text-[11px] pp:font-semibold pp:text-app-text2 pp:hover:bg-app-inset"
+          data-pp-row-add
+          @click="addRow"
+        >
+          {{ t('batch.addRow') }}
+        </button>
+
+        <!-- row navigator: previews each data row live on the canvas -->
         <div
           v-if="batchData.hasRows"
           class="pp:mt-2 pp:flex pp:items-center pp:gap-1.5"
@@ -158,6 +190,45 @@ const rowLabel = computed(() =>
           >
             ✕
           </button>
+        </div>
+
+        <!-- CRUD: edit the ACTIVE row's cells (canvas follows live) -->
+        <div
+          v-if="batchData.activeRow"
+          class="pp:mt-2 pp:flex pp:flex-col pp:gap-1.5 pp:rounded-lg pp:border pp:border-app-border pp:bg-app-inset pp:p-2"
+          data-pp-row-editor
+        >
+          <label
+            v-for="name in names"
+            :key="name"
+            class="pp:flex pp:items-center pp:gap-1.5"
+          >
+            <span class="pp:w-[72px] pp:shrink-0 pp:truncate pp:font-uimono pp:text-[10px] pp:text-app-text3">{{ name }}</span>
+            <input
+              :value="batchData.activeRow[name] ?? ''"
+              class="pp:h-7 pp:min-w-0 pp:flex-1 pp:rounded-md pp:border pp:border-app-border2 pp:bg-app-panel pp:px-1.5 pp:text-[11px] pp:text-app-text pp:focus:border-brand-500 pp:focus:outline-none"
+              :data-pp-row-cell="name"
+              @input="batchData.updateActiveCell(name, ($event.target as HTMLInputElement).value)"
+            >
+          </label>
+          <div class="pp:flex pp:gap-1.5">
+            <button
+              type="button"
+              class="pp:flex-1 pp:rounded-md pp:border pp:border-app-border2 pp:py-1 pp:text-[10px] pp:font-semibold pp:text-app-text2 pp:hover:bg-app-panel"
+              data-pp-row-add
+              @click="addRow"
+            >
+              {{ t('batch.addRow') }}
+            </button>
+            <button
+              type="button"
+              class="pp:flex-1 pp:rounded-md pp:border pp:border-app-border2 pp:py-1 pp:text-[10px] pp:text-[#d1443c] pp:hover:bg-app-panel"
+              data-pp-row-delete
+              @click="batchData.removeActiveRow()"
+            >
+              {{ t('batch.deleteRow') }}
+            </button>
+          </div>
         </div>
 
         <div

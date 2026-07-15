@@ -6,7 +6,7 @@ import { computeTableLayout, type TableRowLayout } from '../../../core/table-lay
 import { createTableMeasurer } from '../../../core/table-measurer'
 import { mmToPx } from '../../../core/units'
 import { substituteVariables } from '../../../core/variables'
-import { useDocumentStore } from '../../../stores/document-store'
+import { useBatchDataStore } from '../../../stores/batch-data-store'
 import { TEXT_FONT_STACK } from '../../../render/text-layout'
 
 // DOM table renderer. Cells are ABSOLUTELY positioned from computeTableLayout
@@ -15,18 +15,18 @@ import { TEXT_FONT_STACK } from '../../../render/text-layout'
 const props = defineProps<{ element: TableElement }>()
 
 const { t } = useEditorI18n()
-const doc = useDocumentStore()
+const batchData = useBatchDataStore()
 
-// Layout runs on SUBSTITUTED sample data - wrapped line counts must match
+// Layout runs on SUBSTITUTED active data - wrapped line counts must match
 // what the print engine (which renders a resolved document) will produce.
 const substituted = computed<TableElement>(() => ({
   ...props.element,
   columns: props.element.columns.map(column => ({
     ...column,
-    title: substituteVariables(column.title, doc.document.variables),
+    title: substituteVariables(column.title, batchData.previewData),
   })),
   rows: props.element.rows.map(row =>
-    row.map(cell => substituteVariables(cell, doc.document.variables))),
+    row.map(cell => substituteVariables(cell, batchData.previewData))),
 }))
 
 const layout = computed(() =>

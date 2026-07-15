@@ -2,15 +2,16 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { QrElement } from '../../../core/schema/elements'
 import { substituteVariables } from '../../../core/variables'
-import { useDocumentStore } from '../../../stores/document-store'
+import { useBatchDataStore } from '../../../stores/batch-data-store'
 
 // Editor-side QR rendering: regenerates a data URL when content/level
 // change (debounced - typing in the properties panel fires per keystroke).
 const props = defineProps<{ element: QrElement }>()
 
-const doc = useDocumentStore()
-// Preview encodes SAMPLE data - the panel textarea still edits the raw source.
-const content = computed(() => substituteVariables(props.element.content, doc.document.variables))
+const batchData = useBatchDataStore()
+// Preview encodes the ACTIVE data (samples or the selected CSV row) - the
+// panel textarea still edits the raw source.
+const content = computed(() => substituteVariables(props.element.content, batchData.previewData))
 
 const dataUrl = ref<string | null>(null)
 const failed = ref(false)

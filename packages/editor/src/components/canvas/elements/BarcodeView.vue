@@ -2,15 +2,16 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { BarcodeElement } from '../../../core/schema/elements'
 import { substituteVariables } from '../../../core/variables'
-import { useDocumentStore } from '../../../stores/document-store'
+import { useBatchDataStore } from '../../../stores/batch-data-store'
 
 // Editor-side barcode rendering. jsbarcode THROWS on invalid content (bad
 // checksums etc.) - caught and surfaced as an inline error placeholder.
 const props = defineProps<{ element: BarcodeElement }>()
 
-const doc = useDocumentStore()
-// Preview encodes SAMPLE data - the panel input still edits the raw source.
-const content = computed(() => substituteVariables(props.element.content, doc.document.variables))
+const batchData = useBatchDataStore()
+// Preview encodes the ACTIVE data (samples or the selected CSV row) - the
+// panel input still edits the raw source.
+const content = computed(() => substituteVariables(props.element.content, batchData.previewData))
 
 const dataUrl = ref<string | null>(null)
 const failed = ref(false)

@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { useBatchCsv } from '../../composables/use-batch-csv'
 import { useEditorI18n } from '../../composables/use-editor-i18n'
 import { cloneJson } from '../../core/clone'
-import { CsvParseError, parseCsv, serializeCsv } from '../../core/csv'
 import { collectVariables, resolveDocument } from '../../core/variables'
-import { validateBatchBarcodes, type BatchBarcodeFailure } from '../../render/batch-preflight'
 import { downloadBlob } from '../../render/download'
-import { exportPdf, exportPdfBatch, MAX_BATCH_ROWS } from '../../render/export-pdf'
+import { exportPdf, exportPdfBatch } from '../../render/export-pdf'
 import { exportPng } from '../../render/export-image'
 import { printDocument, printDocumentBatch } from '../../render/print-browser'
 import { renderToCanvas } from '../../render/render-engine'
+import { useBatchDataStore } from '../../stores/batch-data-store'
 import { useDocumentStore } from '../../stores/document-store'
 
 // PrintDesignPro export modal: format cards (PNG / PDF / direct print) on the
@@ -31,30 +31,22 @@ const errorText = ref<string | null>(null)
 /** Invalidates in-flight preview renders when the dialog closes/reopens. */
 let previewTicket = 0
 
-// ---- CSV batch (round 13) --------------------------------------------
+// ---- CSV batch (round 13; shared store since round 18) -----------------
+// Data can be loaded HERE or in the Variables panel - same store, so rows
+// uploaded in either place drive both the canvas preview and this dialog.
+const batchData = useBatchDataStore()
+const { loadCsvFile, downloadSampleCsv } = useBatchCsv()
 const usedVariables = computed(() => collectVariables(doc.document))
-const csvRows = ref<Array<Record<string, string>>>([])
-const csvHeaders = ref<string[]>([])
-const csvFileName = ref<string | null>(null)
 
 /** Variables the CSV does not provide - they fall back to sample values. */
 const missingVariables = computed(() =>
-  csvHeaders.value.length === 0
+  batchData.headers.length === 0
     ? []
-    : usedVariables.value.filter(name => !csvHeaders.value.includes(name)))
+    : usedVariables.value.filter(name => !batchData.headers.includes(name)))
 
 /** Vue interpolation ends at the first `}}` even inside strings - build here. */
 const missingTokens = computed(() =>
   missingVariables.value.map(name => `{{${name}}}`).join(', '))
-
-const barcodeFailures = ref<BatchBarcodeFailure[]>([])
-
-function resetCsv(): void {
-  csvRows.value = []
-  csvHeaders.value = []
-  csvFileName.value = null
-  barcodeFailures.value = []
-}
 
 async function onCsvChange(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement
@@ -64,43 +56,19 @@ async function onCsvChange(event: Event): Promise<void> {
     return
   errorText.value = null
   try {
-    const { headers, rows } = parseCsv(await file.text())
-    if (rows.length === 0)
-      throw new CsvParseError(t('batch.noRows'))
-    if (rows.length > MAX_BATCH_ROWS)
-      throw new CsvParseError(t('batch.tooMany').replace('{max}', String(MAX_BATCH_ROWS)))
-    // Pre-flight: a row with invalid barcode content would print a BLANK
-    // barcode on a page nobody previews - block the batch instead.
-    barcodeFailures.value = await validateBatchBarcodes(doc.document, rows)
-    csvHeaders.value = headers
-    csvRows.value = rows
-    csvFileName.value = file.name
+    await loadCsvFile(file)
   }
   catch (error) {
-    resetCsv()
+    batchData.clear()
     errorText.value = error instanceof Error ? error.message : String(error)
   }
 }
 
-/**
- * Ready-to-fill CSV: header = the document's variables, first row = the
- * current sample values - open in Excel, add rows, upload back.
- */
-function downloadSampleCsv(): void {
-  const headers = usedVariables.value
-  const sampleRow = Object.fromEntries(
-    headers.map(name => [name, doc.document.variables[name] ?? '']),
-  )
-  const csv = serializeCsv(headers, [sampleRow])
-  // BOM so Excel opens UTF-8 (Vietnamese/Chinese values) correctly.
-  downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv' }), 'batch-data.csv')
-}
-
 /** Batch applies to PDF and direct print; PNG always exports one sample page. */
-const batchActive = computed(() => csvRows.value.length > 0 && format.value !== 'png')
+const batchActive = computed(() => batchData.hasRows && format.value !== 'png')
 
 /** Batch is blocked (CTA disabled) while any row carries invalid barcodes. */
-const batchBlocked = computed(() => batchActive.value && barcodeFailures.value.length > 0)
+const batchBlocked = computed(() => batchActive.value && batchData.barcodeFailures.length > 0)
 
 // computed: labels follow runtime locale switches
 const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `export.${string}` }>>(() => [
@@ -112,7 +80,7 @@ const formats = computed<Array<{ value: ExportFormat, label: string, descKey: `e
 const ctaLabel = computed(() => {
   if (batchActive.value) {
     const key = format.value === 'pdf' ? 'batch.ctaPdf' : 'batch.ctaPrint'
-    return t(key as never).replace('{n}', String(csvRows.value.length))
+    return t(key as never).replace('{n}', String(batchData.rows.length))
   }
   if (format.value === 'png')
     return t('export.ctaPng')
@@ -121,11 +89,12 @@ const ctaLabel = computed(() => {
   return t('export.ctaPrint')
 })
 
+// Batch data intentionally SURVIVES dialog close/reopen (it may have been
+// loaded in the Variables panel) - only transient error state resets.
 watch(() => props.open, async (open) => {
   previewTicket++
   if (open) {
     errorText.value = null
-    resetCsv()
     void renderPreview(previewTicket)
     await nextTick()
     overlayRef.value?.focus()
@@ -137,8 +106,12 @@ watch(() => props.open, async (open) => {
 
 async function renderPreview(ticket: number): Promise<void> {
   try {
-    // Preview shows sample variable values - same as single exports.
-    const canvas = await renderToCanvas(resolveDocument(cloneJson(doc.document)), { dpi: 150 })
+    // Preview shows the ACTIVE data (samples, or the CSV row selected in
+    // the Variables panel's row navigator).
+    const canvas = await renderToCanvas(
+      resolveDocument(cloneJson(doc.document), batchData.activeRow ?? {}),
+      { dpi: 150 },
+    )
     if (ticket === previewTicket)
       previewUrl.value = canvas.toDataURL('image/png')
   }
@@ -163,13 +136,13 @@ async function run(): Promise<void> {
     else if (format.value === 'pdf') {
       downloadBlob(
         batchActive.value
-          ? await exportPdfBatch(snapshot, csvRows.value)
+          ? await exportPdfBatch(snapshot, cloneJson(batchData.rows))
           : await exportPdf(snapshot),
         `${filename}.pdf`,
       )
     }
     else if (batchActive.value) {
-      await printDocumentBatch(snapshot, csvRows.value)
+      await printDocumentBatch(snapshot, cloneJson(batchData.rows))
     }
     else {
       await printDocument(snapshot)
@@ -242,12 +215,12 @@ async function run(): Promise<void> {
               <span
                 class="pp:min-w-0 pp:truncate"
                 data-pp-batch-file
-              >{{ csvFileName ?? t('batch.choose') }}</span>
+              >{{ batchData.fileName ?? t('batch.choose') }}</span>
               <span
-                v-if="csvRows.length"
+                v-if="batchData.hasRows"
                 class="pp:ml-auto pp:shrink-0 pp:rounded pp:bg-brand-soft pp:px-1.5 pp:py-0.5 pp:font-uimono pp:text-[10px] pp:font-bold pp:text-brand-500"
                 data-pp-batch-count
-              >{{ csvRows.length }} {{ t('batch.rows') }}</span>
+              >{{ batchData.rows.length }} {{ t('batch.rows') }}</span>
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -272,7 +245,7 @@ async function run(): Promise<void> {
               {{ t('batch.missing') }} {{ missingTokens }}
             </p>
             <div
-              v-if="barcodeFailures.length"
+              v-if="batchData.barcodeFailures.length"
               class="pp:mt-1.5 pp:rounded-lg pp:bg-rose-50 pp:p-2 pp:text-[10px] pp:text-rose-600"
               data-pp-batch-barcode-errors
             >
@@ -280,13 +253,13 @@ async function run(): Promise<void> {
                 {{ t('batch.badBarcodes') }}
               </p>
               <p
-                v-for="failure in barcodeFailures.slice(0, 5)"
+                v-for="failure in batchData.barcodeFailures.slice(0, 5)"
                 :key="`${failure.row}-${failure.elementName}`"
               >
                 #{{ failure.row }} · {{ failure.elementName }} · "{{ failure.content }}"
               </p>
-              <p v-if="barcodeFailures.length > 5">
-                +{{ barcodeFailures.length - 5 }}…
+              <p v-if="batchData.barcodeFailures.length > 5">
+                +{{ batchData.barcodeFailures.length - 5 }}…
               </p>
             </div>
           </div>

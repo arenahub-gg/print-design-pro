@@ -7,6 +7,7 @@ import { collectVariables } from '../../core/variables'
 import { useBatchDataStore } from '../../stores/batch-data-store'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
+import DataTableDialog from './DataTableDialog.vue'
 
 // "Data variables" tab: variables are INFERRED from {{name}} tokens in the
 // document. This panel edits SAMPLE values AND loads the multi-row CSV data
@@ -20,6 +21,7 @@ const { t } = useEditorI18n()
 
 const names = computed(() => collectVariables(doc.document))
 const csvError = ref<string | null>(null)
+const dataTableOpen = ref(false)
 
 /** Vue interpolation ends at the first `}}` even inside strings - build here. */
 function token(name: string): string {
@@ -156,6 +158,16 @@ watch(
           {{ t('batch.addRow') }}
         </button>
 
+        <!-- roomy spreadsheet view of the same data -->
+        <button
+          type="button"
+          class="pp:mt-2 pp:w-full pp:rounded-lg pp:border pp:border-brand-500 pp:py-1.5 pp:text-[11px] pp:font-semibold pp:text-brand-500 pp:hover:bg-brand-soft"
+          data-pp-datatable-open
+          @click="dataTableOpen = true"
+        >
+          {{ t('datatable.open') }}
+        </button>
+
         <!-- row navigator: previews each data row live on the canvas -->
         <div
           v-if="batchData.hasRows"
@@ -247,5 +259,10 @@ watch(
         </div>
       </div>
     </template>
+
+    <DataTableDialog
+      :open="dataTableOpen"
+      @close="dataTableOpen = false"
+    />
   </div>
 </template>

@@ -58,6 +58,22 @@ test('variables render sample values and a CSV batch exports one PDF page per ro
   await page.locator('[data-pp-row-delete]').click()
   await expect(page.locator('[data-pp-panel-batch-count]')).toContainText('3')
 
+  // Round 20: the data table dialog is a roomy view of the SAME rows
+  await page.locator('[data-pp-datatable-open]').click()
+  await expect(page.locator('[data-pp-datatable-dialog]')).toBeVisible()
+  await expect(page.locator('[data-pp-datatable-row]')).toHaveCount(3)
+  // edit a cell in the grid - canvas behind the dialog follows
+  await page.locator('[data-pp-datatable-row="0"]').click()
+  await page.locator('[data-pp-cell="0-name"]').fill('Grid Person')
+  await expect(textEl).toContainText('To: Grid Person')
+  // add + delete keep counts in sync
+  await page.locator('[data-pp-datatable-add]').click()
+  await expect(page.locator('[data-pp-datatable-row]')).toHaveCount(4)
+  await page.locator('[data-pp-datatable-delete="3"]').click()
+  await expect(page.locator('[data-pp-datatable-row]')).toHaveCount(3)
+  await page.locator('[data-pp-datatable-close]').click()
+  await expect(page.locator('[data-pp-panel-batch-count]')).toContainText('3')
+
   // Export dialog shares the same data - rows are pre-loaded
   await page.locator('[data-pp-export-open]').click()
   await expect(page.locator('[data-pp-batch-section]')).toBeVisible()

@@ -5,6 +5,7 @@ import { cloneJson } from '../../core/clone'
 import { openTemplate } from '../../core/open-template'
 import type { TemplateDocument } from '../../core/schema/template'
 import type { EditorLocale } from '../../locales/messages'
+import { useBatchDataStore } from '../../stores/batch-data-store'
 import { useDocumentStore } from '../../stores/document-store'
 import { useHistoryStore } from '../../stores/history-store'
 import { useSelectionStore } from '../../stores/selection-store'
@@ -39,6 +40,7 @@ const emit = defineEmits<{
 const doc = useDocumentStore()
 const history = useHistoryStore()
 const selection = useSelectionStore()
+const batchData = useBatchDataStore()
 
 provideEditorI18n(toRef(props, 'locale'))
 
@@ -72,6 +74,8 @@ function open(next: TemplateDocument): void {
     emitTimer = null
   }
   openTemplate(next, { document: doc, history, selection })
+  // Batch rows belong to the print job of the PREVIOUS document.
+  batchData.clear()
   openBaselineVersion = history.editVersion
 }
 

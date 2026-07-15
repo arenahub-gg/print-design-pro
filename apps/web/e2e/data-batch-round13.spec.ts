@@ -30,15 +30,26 @@ test('variables render sample values and a CSV batch exports one PDF page per ro
   // Canvas preview shows the substituted sample, not the raw token
   await expect(page.locator('[data-pp-element-type="text"]')).toContainText('To: SAMPLE PERSON')
 
-  // Export dialog: upload a 3-row CSV (quoted comma exercises the parser)
-  await page.locator('[data-pp-export-open]').click()
-  await expect(page.locator('[data-pp-batch-section]')).toBeVisible()
+  // Round 18: upload the 3-row CSV directly in the Variables tab
   const csv = 'name\n"Nguyen, An"\nBinh\nChau\n'
-  await page.locator('[data-pp-batch-input]').setInputFiles({
+  await page.locator('[data-pp-panel-batch-input]').setInputFiles({
     name: 'people.csv',
     mimeType: 'text/csv',
     buffer: Buffer.from(csv, 'utf8'),
   })
+  await expect(page.locator('[data-pp-panel-batch-count]')).toContainText('3')
+
+  // Row navigator previews each row live on the canvas
+  const textEl = page.locator('[data-pp-element-type="text"]')
+  await expect(textEl).toContainText('To: Nguyen, An')
+  await page.locator('[data-pp-row-next]').click()
+  await expect(textEl).toContainText('To: Binh')
+  await page.locator('[data-pp-row-prev]').click()
+  await expect(textEl).toContainText('To: Nguyen, An')
+
+  // Export dialog shares the same data - rows are pre-loaded
+  await page.locator('[data-pp-export-open]').click()
+  await expect(page.locator('[data-pp-batch-section]')).toBeVisible()
   await expect(page.locator('[data-pp-batch-count]')).toContainText('3')
 
   // PDF card is preselected; CTA now downloads the batch

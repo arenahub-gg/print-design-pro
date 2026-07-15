@@ -5,7 +5,7 @@ import { dashPattern, lineArrowGeometry, shapePoints } from '../../core/shape-pa
 import { mmToPx } from '../../core/units'
 import { ensureFontLoaded, fontStack } from '../../core/fonts'
 import { substituteVariables } from '../../core/variables'
-import { useDocumentStore } from '../../stores/document-store'
+import { useBatchDataStore } from '../../stores/batch-data-store'
 import { watch } from 'vue'
 import { TEXT_FONT_STACK, TEXT_LINE_HEIGHT } from '../../render/text-layout'
 import { useInteractionStore } from '../../stores/interaction-store'
@@ -20,12 +20,12 @@ import TableView from './elements/TableView.vue'
 const props = defineProps<{ element: TemplateElement }>()
 
 const interaction = useInteractionStore()
-const doc = useDocumentStore()
+const batchData = useBatchDataStore()
 
-/** Text preview shows SAMPLE variable values; the panel edits raw content. */
+/** Preview shows the active data (samples or the selected CSV row). */
 const textContent = computed(() =>
   props.element.type === 'text'
-    ? substituteVariables(props.element.content, doc.document.variables)
+    ? substituteVariables(props.element.content, batchData.previewData)
     : '')
 
 /** Custom document font (falls back to the pinned default stack). */

@@ -48,9 +48,11 @@ pnpm dev        # app at http://localhost:3000
 
 ### Embed the editor in your Vue app
 
-```bash
-pnpm add @pro-print/editor
-```
+> **Not on npm yet.** Until the package is published, consume it from
+> source: clone this repo and depend on the `packages/editor` workspace
+> (`"@pro-print/editor": "workspace:*"` inside this monorepo), or
+> `pnpm --filter @pro-print/editor build` and install the packed tarball
+> (`npm pack`) in your project.
 
 ```vue
 <script setup>
